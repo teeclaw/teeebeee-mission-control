@@ -32,6 +32,8 @@ Operational dashboard for autonomous opportunity execution.
 - `POST /api/portfolio/:slotId/kill` with `{ "reason": "...", "wallet": "0x..." }`
 - `POST /api/reports` with `{ "summary": "...", "wallet": "0x..." }`
 - `POST /api/auth/chairman` with `{ "wallet": "0x..." }`
+- `POST /api/auth/chairman/challenge` with `{ "wallet": "0x..." }`
+- `POST /api/auth/chairman/verify` with `{ "wallet": "0x...", "signature": "0x..." }`
 
 ## Chairman wallet gate
 - Uses `CHAIRMAN_WALLETS` from `.env`
@@ -47,7 +49,8 @@ npm run dev
 ## Supabase setup
 1. Add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to `.env`.
 2. Run `supabase/schema.sql` in your Supabase SQL editor.
-3. Restart `npm run dev`.
+3. Run `supabase/seed.sql` to populate initial dashboard data.
+4. Restart `npm run dev`.
 
 Repository mode:
 - If Supabase envs exist, Mission Control uses Supabase.
