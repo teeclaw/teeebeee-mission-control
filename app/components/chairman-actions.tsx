@@ -21,169 +21,136 @@ export default function ChairmanActions({ pipeline, portfolio }: Props) {
   const router = useRouter();
   const [wallet, setWallet] = useState("");
   const [sessionToken, setSessionToken] = useState("");
-  const [status, setStatus] = useState<string>("Idle");
+  const [status, setStatus] = useState<string>("IDLE");
 
   async function authenticate() {
-    if (!window.ethereum) {
-      setStatus("Failed: wallet provider not found");
-      return;
-    }
-
-    setStatus("Requesting wallet...");
+    if (!window.ethereum) { setStatus("ERR: No wallet provider"); return; }
+    setStatus("CONNECTING...");
     try {
       const accounts = (await window.ethereum.request({ method: "eth_requestAccounts" })) as string[];
       const selected = accounts?.[0];
-      if (!selected) {
-        setStatus("Failed: no wallet selected");
-        return;
-      }
+      if (!selected) { setStatus("ERR: No wallet selected"); return; }
       setWallet(selected);
-
       const challengeRes = await fetch("/api/auth/chairman/challenge", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
+        method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ wallet: selected })
       });
       const challengePayload = await challengeRes.json();
-      if (!challengeRes.ok) {
-        setStatus(`Failed: ${challengePayload.error || "challenge failed"}`);
-        return;
-      }
-
+      if (!challengeRes.ok) { setStatus(`ERR: ${challengePayload.error}`); return; }
       const signature = (await window.ethereum.request({
-        method: "personal_sign",
-        params: [challengePayload.message, selected]
+        method: "personal_sign", params: [challengePayload.message, selected]
       })) as string;
-
       const verifyRes = await fetch("/api/auth/chairman/verify", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
+        method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ wallet: selected, signature })
       });
       const verifyPayload = await verifyRes.json();
-      if (!verifyRes.ok) {
-        setStatus(`Failed: ${verifyPayload.error || "verify failed"}`);
-        return;
-      }
-
+      if (!verifyRes.ok) { setStatus(`ERR: ${verifyPayload.error}`); return; }
       setSessionToken(verifyPayload.sessionToken || "");
-      setStatus("Chairman authenticated");
-    } catch (e) {
-      setStatus(`Failed: ${e instanceof Error ? e.message : "unknown error"}`);
-    }
+      setStatus("AUTHENTICATED");
+    } catch (e) { setStatus(`ERR: ${e instanceof Error ? e.message : "unknown"}`); }
   }
 
   async function run(action: () => Promise<Response>, successText: string) {
-    setStatus("Running...");
+    setStatus("EXECUTING...");
     try {
       const res = await action();
       const payload = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setStatus(`Failed: ${payload.error || "unknown error"}`);
-        return;
-      }
+      if (!res.ok) { setStatus(`FAILED: ${payload.error || "unknown"}`); return; }
       setStatus(successText);
       router.refresh();
-    } catch (e) {
-      setStatus(`Failed: ${e instanceof Error ? e.message : "unknown error"}`);
-    }
+    } catch (e) { setStatus(`FAILED: ${e instanceof Error ? e.message : "unknown"}`); }
   }
 
-  const firstActiveOpportunity = pipeline.find((p) => p.stage !== "launch");
-  const firstActiveSlot = portfolio.find((p) => p.status === "active");
-
+  const firstOpp = pipeline.find((p) => p.stage !== "launch");
+  const firstSlot = portfolio.find((p) => p.status === "active");
   const authHeaders = {
     "content-type": "application/json",
     ...(sessionToken ? { "x-chairman-session": sessionToken } : {})
   };
 
   return (
-    <article className="card col-12">
-      <h2>Chairman Manual Overrides</h2>
-      <p className="muted" style={{ marginTop: 0 }}>Used for controlled stage changes, slot kills, and report injections.</p>
+    <article className="card col-12" id="overrides">
+      <div className="card-header">
+        <h2>Chairman Overrides</h2>
+        <span className={`badge ${sessionToken ? "badge-healthy" : "badge-offline"}`}>
+          {sessionToken ? "Signed" : "Not authenticated"}
+        </span>
+      </div>
 
-      <div style={{ display: "grid", gap: 10, gridTemplateColumns: "2fr 1fr 1fr 1fr", alignItems: "center" }}>
+      <div className="flex gap-2 flex-wrap items-center mb-3">
         <input
+          className="input"
           value={wallet}
           onChange={(e) => setWallet(e.target.value)}
           placeholder="0xChairmanWallet"
-          style={{ padding: 10, borderRadius: 8, border: "1px solid #355285", background: "#0d1628", color: "#e6edf7" }}
+          style={{ flex: 1, minWidth: 200 }}
+          readOnly={!!sessionToken}
         />
-
-        <button
-          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #355285", background: "#163056", color: "#fff" }}
-          onClick={authenticate}
-        >
-          Authenticate
+        <button className="btn btn-primary" onClick={authenticate} disabled={!!sessionToken}>
+          {sessionToken ? "Connected" : "Authenticate"}
         </button>
+      </div>
 
+      <div className="flex gap-2 flex-wrap">
         <button
-          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #355285", background: "#163056", color: "#fff" }}
-          disabled={!firstActiveOpportunity || !sessionToken}
+          className="btn btn-secondary"
+          disabled={!firstOpp || !sessionToken}
           onClick={() => run(
-            () => fetch(`/api/opportunities/${firstActiveOpportunity?.id}/advance`, {
-              method: "POST",
-              headers: authHeaders,
+            () => fetch(`/api/opportunities/${firstOpp?.id}/advance`, {
+              method: "POST", headers: authHeaders,
               body: JSON.stringify({ nextStage: "launch" })
             }),
-            `Advanced ${firstActiveOpportunity?.title} to launch`
+            `ADVANCED: ${firstOpp?.title} → launch`
           )}
         >
           Fast-track Launch
         </button>
 
         <button
-          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #6b1f1f", background: "#7f1d1d", color: "#fff" }}
-          disabled={!firstActiveSlot || !sessionToken}
+          className="btn btn-danger"
+          disabled={!firstSlot || !sessionToken}
           onClick={() => run(
-            () => fetch(`/api/portfolio/${firstActiveSlot?.slotId}/kill`, {
-              method: "POST",
-              headers: authHeaders,
+            () => fetch(`/api/portfolio/${firstSlot?.slotId}/kill`, {
+              method: "POST", headers: authHeaders,
               body: JSON.stringify({ reason: "Manual kill by chairman" })
             }),
-            `Killed slot ${firstActiveSlot?.slotId}`
+            `KILLED: ${firstSlot?.slotId}`
           )}
         >
-          Kill First Active Slot
+          Kill Active Slot
         </button>
-      </div>
 
-      <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button
-          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #355285", background: "#163056", color: "#fff" }}
+          className="btn btn-secondary"
           disabled={!sessionToken}
           onClick={() => run(
             () => fetch("/api/reports", {
-              method: "POST",
-              headers: authHeaders,
+              method: "POST", headers: authHeaders,
               body: JSON.stringify({ summary: "Chairman override executed." })
             }),
-            "Daily report appended"
+            "REPORT APPENDED"
           )}
         >
           Append Report
         </button>
 
         <button
-          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #1f9d55", background: "#14532d", color: "#fff" }}
-          disabled={!sessionToken || !firstActiveOpportunity}
+          className="btn btn-primary"
+          disabled={!sessionToken || !firstOpp}
           onClick={() => run(
             () => fetch("/api/revenue-ready/mark", {
-              method: "POST",
-              headers: authHeaders,
-              body: JSON.stringify({
-                opportunityId: firstActiveOpportunity?.id,
-                projectName: firstActiveOpportunity?.title
-              })
+              method: "POST", headers: authHeaders,
+              body: JSON.stringify({ opportunityId: firstOpp?.id, projectName: firstOpp?.title })
             }),
-            `Marked ${firstActiveOpportunity?.title} as revenue-ready`
+            `MARKED: ${firstOpp?.title} revenue-ready`
           )}
         >
           Mark Revenue-Ready
         </button>
       </div>
 
-      <p className="muted" style={{ marginBottom: 0, marginTop: 10 }}>Status: {status}</p>
+      <div className="mt-2 mono text-xs muted">STATUS: {status}</div>
     </article>
   );
 }

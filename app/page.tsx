@@ -4,8 +4,23 @@ import OpsPanels from "@/app/components/ops-panels";
 import KPINorthStar from "@/app/components/kpi-northstar";
 
 function HealthBadge({ health }: { health: string }) {
-  const color = health === "healthy" ? "#1f9d55" : health === "stalled" ? "#d97706" : "#b91c1c";
-  return <span className="badge" style={{ borderColor: color }}>{health}</span>;
+  return <span className={`badge badge-${health}`}>{health}</span>;
+}
+
+function StageBadge({ stage }: { stage: string }) {
+  return <span className="badge badge-stage">{stage}</span>;
+}
+
+function ConfidenceBar({ value }: { value: number }) {
+  const color = value >= 80 ? "var(--accent-green)" : value >= 60 ? "var(--accent-amber)" : "var(--accent-red)";
+  return (
+    <div className="flex items-center gap-2">
+      <div className="confidence-bar">
+        <div className="confidence-fill" style={{ width: `${value}%`, background: color }} />
+      </div>
+      <span className="text-xs mono muted">{value}%</span>
+    </div>
+  );
 }
 
 export default async function DashboardPage() {
@@ -22,107 +37,144 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <main>
-      <div className="layout">
-        <aside className="sidebar card">
+    <div className="layout">
+      <aside className="sidebar">
+        <div className="sidebar-brand">
           <h3>Mission Control</h3>
-          <nav>
-            <a href="#northstar">North Star KPI</a>
-            <a href="#overrides">Chairman Overrides</a>
-            <a href="#pipeline">Opportunity Pipeline</a>
-            <a href="#validation">Validation Queue</a>
-            <a href="#portfolio">Portfolio Slots</a>
-            <a href="#runs">Agent Runs</a>
-            <a href="#reports">Daily Reports</a>
-            <a href="#kills">Kill Log</a>
-            <a href="#cron">Cron Calendar</a>
-            <a href="#todos">Pending / Todo</a>
-          </nav>
-        </aside>
-
-        <div className="content">
-          <div className="row" style={{ marginBottom: 16 }}>
-            <h1>Teeebeee Mission Control</h1>
-            <span className="muted">MVP v1</span>
-          </div>
-
-          <section className="grid">
-            <KPINorthStar events={revenueReadyEvents} />
-
-            <div id="overrides" className="col-12">
-              <ChairmanActions pipeline={pipeline} portfolio={portfolio} />
-            </div>
-
-            <article id="pipeline" className="card col-8">
-              <h2>Opportunity Pipeline Board</h2>
-              <ul>
-                {pipeline.map((item) => (
-                  <li key={item.id}>
-                    <strong>{item.title}</strong> — {item.stage} — confidence {item.confidence}% — owner {item.owner}
-                  </li>
-                ))}
-              </ul>
-            </article>
-
-            <article id="validation" className="card col-4">
-              <h2>Validation Queue</h2>
-              {validationQueue.length === 0 ? (
-                <p className="muted">No pending validation items.</p>
-              ) : (
-                <ul>
-                  {validationQueue.map((v) => <li key={v.id}>{v.title}</li>)}
-                </ul>
-              )}
-            </article>
-
-            <article id="portfolio" className="card col-6">
-              <h2>Portfolio Slot Manager</h2>
-              <ul>
-                {portfolio.map((slot) => (
-                  <li key={slot.slotId}><strong>{slot.project}</strong> — {slot.status} — sunset {slot.sunsetAt}</li>
-                ))}
-              </ul>
-            </article>
-
-            <article id="runs" className="card col-6">
-              <h2>Agent Run Monitor</h2>
-              <ul>
-                {runs.map((run) => (
-                  <li key={run.agentId}>
-                    <span style={{ marginRight: 8 }}>{run.name}</span>
-                    <HealthBadge health={run.health} />
-                    <span className="muted"> — {new Date(run.lastRunAt).toLocaleString("en-US", { timeZone: "UTC" })} UTC</span>
-                  </li>
-                ))}
-              </ul>
-            </article>
-
-            <article id="reports" className="card col-6">
-              <h2>Daily Report Feed</h2>
-              <ul>
-                {reports.map((report) => (
-                  <li key={report.id}>{report.summary} <span className="muted">({new Date(report.createdAt).toLocaleString("en-US", { timeZone: "UTC" })} UTC)</span></li>
-                ))}
-              </ul>
-            </article>
-
-            <article id="kills" className="card col-6">
-              <h2>Kill Log</h2>
-              {killLogs.length === 0 ? (
-                <p className="muted">No kills recorded.</p>
-              ) : (
-                <ul>
-                  {killLogs.map((log) => (
-                    <li key={log.id}><strong>{log.slotId}</strong> — {log.reason} <span className="muted">({new Date(log.killedAt).toLocaleString("en-US", { timeZone: "UTC" })} UTC)</span></li>
-                  ))}
-                </ul>
-              )}
-            </article>
-
-            <OpsPanels cronJobs={cronJobs} todos={todos} />
-          </section>
+          <div className="version">Teeebeee v1.0</div>
         </div>
-      </div>
-    </main>
+        <nav>
+          <a href="#northstar"><span className="nav-icon">◆</span> North Star</a>
+          <a href="#overrides"><span className="nav-icon">⚡</span> Overrides</a>
+          <a href="#pipeline"><span className="nav-icon">◇</span> Pipeline</a>
+          <a href="#validation"><span className="nav-icon">◈</span> Validation</a>
+          <a href="#portfolio"><span className="nav-icon">▣</span> Portfolio</a>
+          <a href="#runs"><span className="nav-icon">●</span> Agents</a>
+          <a href="#reports"><span className="nav-icon">▤</span> Reports</a>
+          <a href="#kills"><span className="nav-icon">✕</span> Kill Log</a>
+          <a href="#cron"><span className="nav-icon">◔</span> Cron</a>
+          <a href="#todos"><span className="nav-icon">☐</span> Tasks</a>
+        </nav>
+      </aside>
+
+      <main className="content">
+        <div className="page-header">
+          <h1>Teeebeee Mission Control</h1>
+          <div className="meta">
+            <span className="status-dot live" style={{ marginRight: 6 }} />
+            OPERATIONAL
+          </div>
+        </div>
+
+        <section className="grid">
+          <KPINorthStar events={revenueReadyEvents} />
+
+          <ChairmanActions pipeline={pipeline} portfolio={portfolio} />
+
+          <article id="pipeline" className="card col-8">
+            <div className="card-header">
+              <h2>Opportunity Pipeline</h2>
+              <span className="count">{pipeline.length}</span>
+            </div>
+            {pipeline.map((item) => (
+              <div key={item.id} className="data-row">
+                <div>
+                  <div className="label">{item.title}</div>
+                  <div className="sublabel">{item.owner}</div>
+                </div>
+                <div className="right">
+                  <ConfidenceBar value={item.confidence} />
+                  <StageBadge stage={item.stage} />
+                </div>
+              </div>
+            ))}
+          </article>
+
+          <article id="validation" className="card col-4">
+            <div className="card-header">
+              <h2>Validation Queue</h2>
+              <span className="count">{validationQueue.length}</span>
+            </div>
+            {validationQueue.length === 0 ? (
+              <div className="empty-state">Queue clear</div>
+            ) : (
+              validationQueue.map((v) => (
+                <div key={v.id} className="data-row">
+                  <span className="label">{v.title}</span>
+                  <StageBadge stage="pending" />
+                </div>
+              ))
+            )}
+          </article>
+
+          <article id="portfolio" className="card col-6">
+            <div className="card-header">
+              <h2>Portfolio</h2>
+              <span className="count">{portfolio.length} slots</span>
+            </div>
+            {portfolio.map((slot) => (
+              <div key={slot.slotId} className="data-row">
+                <div>
+                  <div className="label">{slot.project}</div>
+                  <div className="sublabel">Sunset: {slot.sunsetAt}</div>
+                </div>
+                <span className={`badge badge-${slot.status}`}>{slot.status}</span>
+              </div>
+            ))}
+          </article>
+
+          <article id="runs" className="card col-6">
+            <div className="card-header">
+              <h2>Agent Monitor</h2>
+              <span className="count">{runs.length} agents</span>
+            </div>
+            {runs.map((run) => (
+              <div key={run.agentId} className="data-row">
+                <div>
+                  <div className="label">{run.name}</div>
+                  <div className="sublabel">{new Date(run.lastRunAt).toLocaleString("en-US", { timeZone: "UTC", hour: "2-digit", minute: "2-digit" })} UTC</div>
+                </div>
+                <HealthBadge health={run.health} />
+              </div>
+            ))}
+          </article>
+
+          <article id="reports" className="card col-6">
+            <div className="card-header">
+              <h2>Reports</h2>
+              <span className="count">{reports.length}</span>
+            </div>
+            {reports.map((report) => (
+              <div key={report.id} className="data-row">
+                <span className="label" style={{ flex: 1 }}>{report.summary}</span>
+                <span className="sublabel">{new Date(report.createdAt).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" })}</span>
+              </div>
+            ))}
+          </article>
+
+          <article id="kills" className="card col-6">
+            <div className="card-header">
+              <h2>Kill Log</h2>
+              <span className="count">{killLogs.length}</span>
+            </div>
+            {killLogs.length === 0 ? (
+              <div className="empty-state">No kills recorded</div>
+            ) : (
+              killLogs.map((log) => (
+                <div key={log.id} className="data-row">
+                  <div>
+                    <div className="label">{log.slotId}</div>
+                    <div className="sublabel">{log.reason}</div>
+                  </div>
+                  <span className="sublabel">{new Date(log.killedAt).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" })}</span>
+                </div>
+              ))
+            )}
+          </article>
+
+          <OpsPanels cronJobs={cronJobs} todos={todos} />
+        </section>
+      </main>
+    </div>
   );
 }
