@@ -58,3 +58,10 @@ create table if not exists todos (
   priority text not null check (priority in ('low','medium','high')),
   created_at timestamptz not null default now()
 );
+
+create table if not exists revenue_ready_events (
+  id text primary key,
+  opportunity_id text not null references opportunities(id) on delete cascade,
+  project_name text not null,
+  recorded_at timestamptz not null default now()
+);

@@ -28,6 +28,7 @@ Operational dashboard for autonomous opportunity execution.
 - `GET /api/kill-logs`
 - `GET /api/cron-jobs`
 - `GET /api/tasks`
+- `GET /api/kpi/revenue-ready`
 
 ### Mutations (chairman-gated)
 - `POST /api/opportunities/:id/advance` with `{ "nextStage": "validation|build|launch", "wallet": "0x..." }`
@@ -35,6 +36,7 @@ Operational dashboard for autonomous opportunity execution.
 - `POST /api/reports` with `{ "summary": "...", "wallet": "0x..." }`
 - `POST /api/tasks` with `{ "title": "...", "priority": "low|medium|high" }`
 - `POST /api/tasks/:id/toggle`
+- `POST /api/revenue-ready/mark` with `{ "opportunityId": "opp-001", "projectName": "..." }`
 - `POST /api/auth/chairman` with `{ "wallet": "0x..." }`
 - `POST /api/auth/chairman/challenge` with `{ "wallet": "0x..." }`
 - `POST /api/auth/chairman/verify` with `{ "wallet": "0x...", "signature": "0x..." }`

@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabase";
-import type { AgentRun, CronJob, DailyReport, KillLog, Opportunity, OpportunityStage, PortfolioSlot, TodoItem, ValidationItem } from "@/lib/types";
+import type { AgentRun, CronJob, DailyReport, KillLog, Opportunity, OpportunityStage, PortfolioSlot, RevenueReadyEvent, TodoItem, ValidationItem } from "@/lib/types";
 
 export interface MissionControlRepository {
   getOpportunities(): Promise<Opportunity[]>;
@@ -10,8 +10,10 @@ export interface MissionControlRepository {
   getKillLogs(): Promise<KillLog[]>;
   getCronJobs(): Promise<CronJob[]>;
   getTodos(): Promise<TodoItem[]>;
+  getRevenueReadyEvents(): Promise<RevenueReadyEvent[]>;
   addTodo(title: string, priority: TodoItem["priority"]): Promise<TodoItem>;
   toggleTodo(id: string): Promise<TodoItem | null>;
+  recordRevenueReady(opportunityId: string, projectName: string): Promise<RevenueReadyEvent>;
   advanceOpportunityStage(opportunityId: string, nextStage: OpportunityStage): Promise<Opportunity | null>;
   killPortfolioSlot(slotId: string, reason: string, killedBy: string): Promise<PortfolioSlot | null>;
   appendReport(summary: string): Promise<DailyReport>;
@@ -56,6 +58,11 @@ const todos: TodoItem[] = [
   { id: "todo-3", title: "Finalize analytics widgets", status: "done", priority: "low", createdAt: new Date().toISOString() }
 ];
 
+const revenueReadyEvents: RevenueReadyEvent[] = [
+  { id: "rev-1", opportunityId: "opp-001", projectName: "Agent Reputation SDK", recordedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString() },
+  { id: "rev-2", opportunityId: "opp-003", projectName: "A2A Job Router", recordedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 17).toISOString() }
+];
+
 const killLogs: KillLog[] = [];
 
 function createInMemoryRepository(): MissionControlRepository {
@@ -68,6 +75,7 @@ function createInMemoryRepository(): MissionControlRepository {
     getKillLogs: async () => killLogs,
     getCronJobs: async () => cronJobs,
     getTodos: async () => todos,
+    getRevenueReadyEvents: async () => revenueReadyEvents,
     addTodo: async (title, priority) => {
       const item: TodoItem = { id: `todo-${Date.now()}`, title, status: "pending", priority, createdAt: new Date().toISOString() };
       todos.unshift(item);
@@ -78,6 +86,16 @@ function createInMemoryRepository(): MissionControlRepository {
       if (!item) return null;
       item.status = item.status === "pending" ? "done" : "pending";
       return item;
+    },
+    recordRevenueReady: async (opportunityId, projectName) => {
+      const event: RevenueReadyEvent = {
+        id: `rev-${Date.now()}`,
+        opportunityId,
+        projectName,
+        recordedAt: new Date().toISOString()
+      };
+      revenueReadyEvents.unshift(event);
+      return event;
     },
     advanceOpportunityStage: async (opportunityId, nextStage) => {
       const item = opportunities.find((o) => o.id === opportunityId);
@@ -146,6 +164,11 @@ function createSupabaseRepository(): MissionControlRepository {
       if (error || !data) return fallback.getTodos();
       return data.map((t) => ({ id: t.id, title: t.title, status: t.status, priority: t.priority, createdAt: t.created_at })) as TodoItem[];
     },
+    getRevenueReadyEvents: async () => {
+      const { data, error } = await supabase.from("revenue_ready_events").select("id,opportunity_id,project_name,recorded_at").order("recorded_at", { ascending: false });
+      if (error || !data) return fallback.getRevenueReadyEvents();
+      return data.map((r) => ({ id: r.id, opportunityId: r.opportunity_id, projectName: r.project_name, recordedAt: r.recorded_at })) as RevenueReadyEvent[];
+    },
     addTodo: async (title, priority) => {
       const payload = { id: `todo-${Date.now()}`, title, status: "pending", priority, created_at: new Date().toISOString() };
       const { data, error } = await supabase.from("todos").insert(payload).select("id,title,status,priority,created_at").single();
@@ -159,6 +182,17 @@ function createSupabaseRepository(): MissionControlRepository {
       const { data, error } = await supabase.from("todos").update({ status: next }).eq("id", id).select("id,title,status,priority,created_at").single();
       if (error || !data) return fallback.toggleTodo(id);
       return { id: data.id, title: data.title, status: data.status, priority: data.priority, createdAt: data.created_at };
+    },
+    recordRevenueReady: async (opportunityId, projectName) => {
+      const payload = {
+        id: `rev-${Date.now()}`,
+        opportunity_id: opportunityId,
+        project_name: projectName,
+        recorded_at: new Date().toISOString()
+      };
+      const { data, error } = await supabase.from("revenue_ready_events").insert(payload).select("id,opportunity_id,project_name,recorded_at").single();
+      if (error || !data) return fallback.recordRevenueReady(opportunityId, projectName);
+      return { id: data.id, opportunityId: data.opportunity_id, projectName: data.project_name, recordedAt: data.recorded_at };
     },
     advanceOpportunityStage: async (opportunityId, nextStage) => {
       const { data, error } = await supabase.from("opportunities").update({ stage: nextStage }).eq("id", opportunityId).select("id,title,stage,confidence,owner").single();

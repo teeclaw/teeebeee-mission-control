@@ -148,7 +148,7 @@ export default function ChairmanActions({ pipeline, portfolio }: Props) {
         </button>
       </div>
 
-      <div style={{ marginTop: 10 }}>
+      <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button
           style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #355285", background: "#163056", color: "#fff" }}
           disabled={!sessionToken}
@@ -162,6 +162,24 @@ export default function ChairmanActions({ pipeline, portfolio }: Props) {
           )}
         >
           Append Report
+        </button>
+
+        <button
+          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #1f9d55", background: "#14532d", color: "#fff" }}
+          disabled={!sessionToken || !firstActiveOpportunity}
+          onClick={() => run(
+            () => fetch("/api/revenue-ready/mark", {
+              method: "POST",
+              headers: authHeaders,
+              body: JSON.stringify({
+                opportunityId: firstActiveOpportunity?.id,
+                projectName: firstActiveOpportunity?.title
+              })
+            }),
+            `Marked ${firstActiveOpportunity?.title} as revenue-ready`
+          )}
+        >
+          Mark Revenue-Ready
         </button>
       </div>
 

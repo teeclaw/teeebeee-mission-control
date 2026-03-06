@@ -60,3 +60,10 @@ export interface TodoItem {
   priority: "low" | "medium" | "high";
   createdAt: string;
 }
+
+export interface RevenueReadyEvent {
+  id: string;
+  opportunityId: string;
+  projectName: string;
+  recordedAt: string;
+}

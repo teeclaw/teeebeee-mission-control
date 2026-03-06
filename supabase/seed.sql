@@ -64,3 +64,12 @@ on conflict (id) do update set
   status = excluded.status,
   priority = excluded.priority,
   created_at = excluded.created_at;
+
+insert into revenue_ready_events (id, opportunity_id, project_name, recorded_at)
+values
+  ('rev-1', 'opp-001', 'Agent Reputation SDK', now() - interval '5 days'),
+  ('rev-2', 'opp-003', 'A2A Job Router', now() - interval '17 days')
+on conflict (id) do update set
+  opportunity_id = excluded.opportunity_id,
+  project_name = excluded.project_name,
+  recorded_at = excluded.recorded_at;

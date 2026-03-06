@@ -23,6 +23,7 @@ export const useCases = {
   listKillLogs: async () => repo.getKillLogs(),
   listCronJobs: async () => repo.getCronJobs(),
   listTodos: async () => repo.getTodos(),
+  listRevenueReadyEvents: async () => repo.getRevenueReadyEvents(),
   chairmanGate: (wallet: string | null) => {
     const allowed = parseAllowedWallets();
     if (!allowed.length) return { allowed: true, reason: "CHAIRMAN_WALLETS not set (dev mode)" };
@@ -56,5 +57,10 @@ export const useCases = {
     const item = await repo.toggleTodo(id);
     if (!item) return { ok: false, error: "Todo not found" };
     return { ok: true, data: item };
+  },
+  recordRevenueReady: async (opportunityId: string, projectName: string) => {
+    if (!opportunityId.trim() || !projectName.trim()) return { ok: false, error: "opportunityId and projectName are required" };
+    const data = await repo.recordRevenueReady(opportunityId.trim(), projectName.trim());
+    return { ok: true, data };
   }
 };

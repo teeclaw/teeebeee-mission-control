@@ -1,6 +1,7 @@
 import { useCases } from "@/lib/use-cases";
 import ChairmanActions from "@/app/components/chairman-actions";
 import OpsPanels from "@/app/components/ops-panels";
+import KPINorthStar from "@/app/components/kpi-northstar";
 
 function HealthBadge({ health }: { health: string }) {
   const color = health === "healthy" ? "#1f9d55" : health === "stalled" ? "#d97706" : "#b91c1c";
@@ -8,7 +9,7 @@ function HealthBadge({ health }: { health: string }) {
 }
 
 export default async function DashboardPage() {
-  const [pipeline, validationQueue, portfolio, runs, reports, killLogs, cronJobs, todos] = await Promise.all([
+  const [pipeline, validationQueue, portfolio, runs, reports, killLogs, cronJobs, todos, revenueReadyEvents] = await Promise.all([
     useCases.listPipeline(),
     useCases.listValidationQueue(),
     useCases.listPortfolio(),
@@ -16,7 +17,8 @@ export default async function DashboardPage() {
     useCases.listReports(),
     useCases.listKillLogs(),
     useCases.listCronJobs(),
-    useCases.listTodos()
+    useCases.listTodos(),
+    useCases.listRevenueReadyEvents()
   ]);
 
   return (
@@ -25,6 +27,7 @@ export default async function DashboardPage() {
         <aside className="sidebar card">
           <h3>Mission Control</h3>
           <nav>
+            <a href="#northstar">North Star KPI</a>
             <a href="#overrides">Chairman Overrides</a>
             <a href="#pipeline">Opportunity Pipeline</a>
             <a href="#validation">Validation Queue</a>
@@ -44,6 +47,8 @@ export default async function DashboardPage() {
           </div>
 
           <section className="grid">
+            <KPINorthStar events={revenueReadyEvents} />
+
             <div id="overrides" className="col-12">
               <ChairmanActions pipeline={pipeline} portfolio={portfolio} />
             </div>
