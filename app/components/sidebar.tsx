@@ -21,7 +21,7 @@ const sections = [
     label: "Operations",
     links: [
       { href: "/agents", icon: "●", text: "Agents" },
-      { href: "/cron", icon: "⏱", text: "Cron Jobs" },
+      { href: "/cron", icon: "⏱", text: "Schedule" },
     ],
   },
 ];

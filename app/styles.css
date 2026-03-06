@@ -762,26 +762,146 @@ body {
 .th-md, .td-md { width: 140px; flex-shrink: 0; }
 .th-sm, .td-sm { width: 120px; flex-shrink: 0; text-align: right; }
 
-/* ─── Cron row grid ─── */
-.cron-row-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* ─── Schedule page ─── */
+.sched-section {
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-lg);
+  padding: 20px 24px;
 }
 
-.cron-row-card {
+.sched-section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.sched-section-icon { font-size: 16px; }
+
+.sched-section-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.always-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--r-sm);
+  border: 1px solid;
+}
+
+.view-toggle {
+  display: flex;
   background: var(--bg-2);
   border: 1px solid var(--border-1);
   border-radius: var(--r-sm);
-  padding: 14px 16px;
-  transition: border-color 0.15s;
+  overflow: hidden;
 }
 
-.cron-row-card:hover { border-color: var(--border-2); }
+.vt-btn {
+  padding: 7px 16px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  background: transparent;
+  color: var(--text-3);
+  border: none;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.vt-btn:hover { color: var(--text-1); }
+
+.vt-active {
+  background: var(--bg-4);
+  color: var(--text-1);
+}
+
+.sched-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.sched-grid-single {
+  grid-template-columns: 1fr;
+}
+
+.sched-col {
+  border-right: 1px solid var(--border-1);
+  min-height: 200px;
+}
+
+.sched-col:last-child { border-right: none; }
+
+.sched-col-head {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: var(--text-3);
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid var(--border-1);
+}
+
+.sched-col-today {
+  color: var(--green);
+  background: var(--green-soft);
+}
+
+.sched-col-body {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sched-card {
+  border-radius: 6px;
+  padding: 8px 10px;
+  transition: opacity 0.15s;
+}
+
+.sched-card:hover { opacity: 0.85; }
+
+.sched-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sched-card-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-4);
+  margin-top: 2px;
+}
+
+.sched-empty {
+  text-align: center;
+  padding: 20px 0;
+  color: var(--text-4);
+  font-size: 12px;
+}
 
 .failed-panel {
   border-color: rgba(239,68,68,0.15);
   background: linear-gradient(135deg, var(--bg-1) 0%, rgba(239,68,68,0.03) 100%);
+}
+
+@media (max-width: 900px) {
+  .sched-grid { grid-template-columns: repeat(3, 1fr); }
+  .sched-col { border-bottom: 1px solid var(--border-1); }
 }
 
 /* ─── Stage grid ─── */

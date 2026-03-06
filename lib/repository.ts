@@ -53,11 +53,15 @@ const reports: DailyReport[] = [
 ];
 
 const cronJobs: CronJob[] = [
-  { id: "cron-1", title: "Daily Morning Brief", owner: "Taiga", schedule: "03:00 UTC+7", day: "Mon", status: "healthy" },
-  { id: "cron-2", title: "Daily Improvement Surprise", owner: "Shizuku", schedule: "04:00 UTC+7", day: "Tue", status: "healthy" },
-  { id: "cron-3", title: "Security Audit", owner: "Kurogane", schedule: "09:00 UTC+7", day: "Wed", status: "delayed" },
-  { id: "cron-4", title: "Portfolio Governance", owner: "Mizuho", schedule: "10:00 UTC+7", day: "Thu", status: "healthy" },
-  { id: "cron-5", title: "Weekly GTM Pulse", owner: "Himawari", schedule: "17:00 UTC+7", day: "Fri", status: "healthy" }
+  { id: "cron-0", title: "Mission Control Check", owner: "Taiga", schedule: "Every 30 min", day: "All", frequency: "always", status: "healthy", color: "#6366f1" },
+  { id: "cron-1", title: "Market Signal Scan", owner: "Sora", schedule: "5:00 AM", day: "All", frequency: "daily", status: "healthy", color: "#eab308" },
+  { id: "cron-2", title: "Morning Brief", owner: "Taiga", schedule: "8:00 AM", day: "All", frequency: "daily", status: "healthy", color: "#22c55e" },
+  { id: "cron-3", title: "Competitor YouTube Scan", owner: "Sora", schedule: "10:00 AM", day: "All", frequency: "daily", status: "healthy", color: "#ef4444" },
+  { id: "cron-4", title: "Newsletter Reminder", owner: "Himawari", schedule: "9:00 AM", day: "Tue", frequency: "weekly", status: "healthy", color: "#a855f7" },
+  { id: "cron-5", title: "Security Audit", owner: "Kurogane", schedule: "9:00 AM", day: "Wed", frequency: "weekly", status: "delayed", color: "#f97316" },
+  { id: "cron-6", title: "Portfolio Governance", owner: "Mizuho", schedule: "10:00 AM", day: "Thu", frequency: "weekly", status: "healthy", color: "#06b6d4" },
+  { id: "cron-7", title: "Weekly GTM Pulse", owner: "Himawari", schedule: "5:00 PM", day: "Fri", frequency: "weekly", status: "healthy", color: "#ec4899" },
+  { id: "cron-8", title: "Data Cleanup", owner: "Shizuku", schedule: "2:00 AM", day: "Sat", frequency: "weekly", status: "healthy", color: "#14b8a6" }
 ];
 
 const todos: TodoItem[] = [
@@ -163,7 +167,7 @@ function createSupabaseRepository(): MissionControlRepository {
       return data.map((k) => ({ id: k.id, slotId: k.slot_id, reason: k.reason, killedAt: k.killed_at, killedBy: k.killed_by })) as KillLog[];
     },
     getCronJobs: async () => {
-      const { data, error } = await supabase.from("cron_jobs").select("id,title,owner,schedule,day,status").order("day", { ascending: true });
+      const { data, error } = await supabase.from("cron_jobs").select("id,title,owner,schedule,day,frequency,status,color").order("day", { ascending: true });
       if (error || !data) return fallback.getCronJobs();
       return data as CronJob[];
     },

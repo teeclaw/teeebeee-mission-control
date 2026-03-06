@@ -44,13 +44,17 @@ export interface DailyReport {
   createdAt: string;
 }
 
+export type CronDay = "Sun" | "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat";
+
 export interface CronJob {
   id: string;
   title: string;
   owner: string;
   schedule: string;
-  day: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
+  day: CronDay | "All";
+  frequency: "always" | "daily" | "weekly";
   status: "healthy" | "delayed" | "failed";
+  color: string;
 }
 
 export interface TodoItem {

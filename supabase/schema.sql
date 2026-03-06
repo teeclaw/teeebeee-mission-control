@@ -47,8 +47,10 @@ create table if not exists cron_jobs (
   title text not null,
   owner text not null,
   schedule text not null,
-  day text not null check (day in ('Mon','Tue','Wed','Thu','Fri','Sat','Sun')),
-  status text not null check (status in ('healthy','delayed','failed'))
+  day text not null check (day in ('Sun','Mon','Tue','Wed','Thu','Fri','Sat','All')),
+  frequency text not null default 'weekly' check (frequency in ('always','daily','weekly')),
+  status text not null check (status in ('healthy','delayed','failed')),
+  color text not null default '#6366f1'
 );
 
 create table if not exists todos (

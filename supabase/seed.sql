@@ -48,19 +48,25 @@ on conflict (id) do update set
   summary = excluded.summary,
   created_at = excluded.created_at;
 
-insert into cron_jobs (id, title, owner, schedule, day, status)
+insert into cron_jobs (id, title, owner, schedule, day, frequency, status, color)
 values
-  ('cron-1', 'Daily Morning Brief', 'Taiga', '03:00 UTC+7', 'Mon', 'healthy'),
-  ('cron-2', 'Daily Improvement Surprise', 'Shizuku', '04:00 UTC+7', 'Tue', 'healthy'),
-  ('cron-3', 'Security Audit', 'Kurogane', '09:00 UTC+7', 'Wed', 'delayed'),
-  ('cron-4', 'Portfolio Governance', 'Mizuho', '10:00 UTC+7', 'Thu', 'healthy'),
-  ('cron-5', 'Weekly GTM Pulse', 'Himawari', '17:00 UTC+7', 'Fri', 'healthy')
+  ('cron-0', 'Mission Control Check', 'Taiga', 'Every 30 min', 'All', 'always', 'healthy', '#6366f1'),
+  ('cron-1', 'Market Signal Scan', 'Sora', '5:00 AM', 'All', 'daily', 'healthy', '#eab308'),
+  ('cron-2', 'Morning Brief', 'Taiga', '8:00 AM', 'All', 'daily', 'healthy', '#22c55e'),
+  ('cron-3', 'Competitor YouTube Scan', 'Sora', '10:00 AM', 'All', 'daily', 'healthy', '#ef4444'),
+  ('cron-4', 'Newsletter Reminder', 'Himawari', '9:00 AM', 'Tue', 'weekly', 'healthy', '#a855f7'),
+  ('cron-5', 'Security Audit', 'Kurogane', '9:00 AM', 'Wed', 'weekly', 'delayed', '#f97316'),
+  ('cron-6', 'Portfolio Governance', 'Mizuho', '10:00 AM', 'Thu', 'weekly', 'healthy', '#06b6d4'),
+  ('cron-7', 'Weekly GTM Pulse', 'Himawari', '5:00 PM', 'Fri', 'weekly', 'healthy', '#ec4899'),
+  ('cron-8', 'Data Cleanup', 'Shizuku', '2:00 AM', 'Sat', 'weekly', 'healthy', '#14b8a6')
 on conflict (id) do update set
   title = excluded.title,
   owner = excluded.owner,
   schedule = excluded.schedule,
   day = excluded.day,
-  status = excluded.status;
+  frequency = excluded.frequency,
+  status = excluded.status,
+  color = excluded.color;
 
 insert into todos (id, title, status, priority, created_at)
 values
