@@ -35,9 +35,17 @@ const slots: PortfolioSlot[] = [
 ];
 
 const runs: AgentRun[] = [
+  { agentId: "main", name: "Mizutama", health: "healthy", lastRunAt: new Date().toISOString() },
   { agentId: "pipeline-controller", name: "Taiga", health: "healthy", lastRunAt: new Date().toISOString() },
   { agentId: "market-researcher", name: "Sora", health: "stalled", lastRunAt: new Date(Date.now() - 1000 * 60 * 190).toISOString() },
-  { agentId: "lead-developer", name: "Nagare", health: "healthy", lastRunAt: new Date().toISOString() }
+  { agentId: "opportunity-validator", name: "Miyabi", health: "healthy", lastRunAt: new Date(Date.now() - 1000 * 60 * 45).toISOString() },
+  { agentId: "portfolio-manager", name: "Mizuho", health: "healthy", lastRunAt: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
+  { agentId: "product-architect", name: "Kagayaki", health: "offline", lastRunAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString() },
+  { agentId: "lead-developer", name: "Nagare", health: "healthy", lastRunAt: new Date().toISOString() },
+  { agentId: "head-of-growth", name: "Himawari", health: "healthy", lastRunAt: new Date(Date.now() - 1000 * 60 * 60).toISOString() },
+  { agentId: "data-analyst", name: "Shizuku", health: "healthy", lastRunAt: new Date(Date.now() - 1000 * 60 * 120).toISOString() },
+  { agentId: "security-engineer", name: "Kurogane", health: "healthy", lastRunAt: new Date(Date.now() - 1000 * 60 * 90).toISOString() },
+  { agentId: "qa-auditor", name: "Komari", health: "offline", lastRunAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString() }
 ];
 
 const reports: DailyReport[] = [

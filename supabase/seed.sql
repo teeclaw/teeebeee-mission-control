@@ -25,9 +25,17 @@ on conflict (slot_id) do update set
 
 insert into agent_runs (agent_id, name, health, last_run_at)
 values
+  ('main', 'Mizutama', 'healthy', now()),
   ('pipeline-controller', 'Taiga', 'healthy', now()),
   ('market-researcher', 'Sora', 'stalled', now() - interval '190 minutes'),
-  ('lead-developer', 'Nagare', 'healthy', now())
+  ('opportunity-validator', 'Miyabi', 'healthy', now() - interval '45 minutes'),
+  ('portfolio-manager', 'Mizuho', 'healthy', now() - interval '30 minutes'),
+  ('product-architect', 'Kagayaki', 'offline', now() - interval '8 hours'),
+  ('lead-developer', 'Nagare', 'healthy', now()),
+  ('head-of-growth', 'Himawari', 'healthy', now() - interval '60 minutes'),
+  ('data-analyst', 'Shizuku', 'healthy', now() - interval '120 minutes'),
+  ('security-engineer', 'Kurogane', 'healthy', now() - interval '90 minutes'),
+  ('qa-auditor', 'Komari', 'offline', now() - interval '12 hours')
 on conflict (agent_id) do update set
   name = excluded.name,
   health = excluded.health,
