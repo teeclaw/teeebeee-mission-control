@@ -762,6 +762,28 @@ body {
 .th-md, .td-md { width: 140px; flex-shrink: 0; }
 .th-sm, .td-sm { width: 120px; flex-shrink: 0; text-align: right; }
 
+/* ─── Cron row grid ─── */
+.cron-row-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cron-row-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-sm);
+  padding: 14px 16px;
+  transition: border-color 0.15s;
+}
+
+.cron-row-card:hover { border-color: var(--border-2); }
+
+.failed-panel {
+  border-color: rgba(239,68,68,0.15);
+  background: linear-gradient(135deg, var(--bg-1) 0%, rgba(239,68,68,0.03) 100%);
+}
+
 /* ─── Stage grid ─── */
 .stage-grid {
   display: grid;
