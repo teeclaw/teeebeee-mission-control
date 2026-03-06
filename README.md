@@ -44,8 +44,17 @@ npm install
 npm run dev
 ```
 
+## Supabase setup
+1. Add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to `.env`.
+2. Run `supabase/schema.sql` in your Supabase SQL editor.
+3. Restart `npm run dev`.
+
+Repository mode:
+- If Supabase envs exist, Mission Control uses Supabase.
+- If not, it falls back to in-memory mode.
+
 ## Immediate next step (production)
-1. Replace in-memory repository with Supabase adapter (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`).
-2. Wire agent run metrics from OpenClaw session events (or gateway status endpoint).
-3. Add RainbowKit connect + signed message verification before mutations.
-4. Add optimistic UI actions for advance/kill/report and surface API failures cleanly.
+1. Wire agent run metrics from OpenClaw session events (or gateway status endpoint).
+2. Add RainbowKit connect + signed message verification before mutations.
+3. Add optimistic UI actions for advance/kill/report and surface API failures cleanly.
+4. Add RLS policies and a dedicated service-role-only API boundary.
