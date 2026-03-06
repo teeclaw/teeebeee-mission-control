@@ -3,12 +3,16 @@ import ChairmanActions from "@/app/components/chairman-actions";
 import OpsPanels from "@/app/components/ops-panels";
 import KPINorthStar from "@/app/components/kpi-northstar";
 
+function StageBadge({ stage }: { stage: string }) {
+  return <span className="badge badge-stage">{stage}</span>;
+}
+
 function HealthBadge({ health }: { health: string }) {
   return <span className={`badge badge-${health}`}>{health}</span>;
 }
 
-function StageBadge({ stage }: { stage: string }) {
-  return <span className="badge badge-stage">{stage}</span>;
+function StatusBadge({ status }: { status: string }) {
+  return <span className={`badge badge-${status}`}>{status}</span>;
 }
 
 function ConfidenceBar({ value }: { value: number }) {
@@ -18,7 +22,7 @@ function ConfidenceBar({ value }: { value: number }) {
       <div className="confidence-bar">
         <div className="confidence-fill" style={{ width: `${value}%`, background: color }} />
       </div>
-      <span className="text-xs mono muted">{value}%</span>
+      <span className="mono text-xs muted">{value}%</span>
     </div>
   );
 }
@@ -46,24 +50,24 @@ export default async function DashboardPage() {
         <nav>
           <a href="#northstar"><span className="nav-icon">◆</span> North Star</a>
           <a href="#overrides"><span className="nav-icon">⚡</span> Overrides</a>
-          <a href="#pipeline"><span className="nav-icon">◇</span> Pipeline</a>
-          <a href="#validation"><span className="nav-icon">◈</span> Validation</a>
+          <a href="#pipeline"><span className="nav-icon">◈</span> Pipeline</a>
+          <a href="#validation"><span className="nav-icon">◇</span> Validation</a>
           <a href="#portfolio"><span className="nav-icon">▣</span> Portfolio</a>
           <a href="#runs"><span className="nav-icon">●</span> Agents</a>
           <a href="#reports"><span className="nav-icon">▤</span> Reports</a>
           <a href="#kills"><span className="nav-icon">✕</span> Kill Log</a>
-          <a href="#cron"><span className="nav-icon">◔</span> Cron</a>
+          <a href="#cron"><span className="nav-icon">⏱</span> Cron</a>
           <a href="#todos"><span className="nav-icon">☐</span> Tasks</a>
         </nav>
       </aside>
 
       <main className="content">
         <div className="page-header">
-          <h1>Teeebeee Mission Control</h1>
-          <div className="meta">
+          <h1>Mission Control</h1>
+          <span className="meta">
             <span className="status-dot live" style={{ marginRight: 6 }} />
-            OPERATIONAL
-          </div>
+            OPERATIONAL · {new Date().toISOString().slice(0, 10)}
+          </span>
         </div>
 
         <section className="grid">
@@ -96,12 +100,12 @@ export default async function DashboardPage() {
               <span className="count">{validationQueue.length}</span>
             </div>
             {validationQueue.length === 0 ? (
-              <div className="empty-state">Queue clear</div>
+              <div className="empty-state">No pending validations</div>
             ) : (
               validationQueue.map((v) => (
                 <div key={v.id} className="data-row">
                   <span className="label">{v.title}</span>
-                  <StageBadge stage="pending" />
+                  <StageBadge stage="awaiting" />
                 </div>
               ))
             )}
@@ -109,8 +113,8 @@ export default async function DashboardPage() {
 
           <article id="portfolio" className="card col-6">
             <div className="card-header">
-              <h2>Portfolio</h2>
-              <span className="count">{portfolio.length} slots</span>
+              <h2>Portfolio Slots</h2>
+              <span className="count">{portfolio.length}</span>
             </div>
             {portfolio.map((slot) => (
               <div key={slot.slotId} className="data-row">
@@ -118,21 +122,21 @@ export default async function DashboardPage() {
                   <div className="label">{slot.project}</div>
                   <div className="sublabel">Sunset: {slot.sunsetAt}</div>
                 </div>
-                <span className={`badge badge-${slot.status}`}>{slot.status}</span>
+                <StatusBadge status={slot.status} />
               </div>
             ))}
           </article>
 
           <article id="runs" className="card col-6">
             <div className="card-header">
-              <h2>Agent Monitor</h2>
+              <h2>Agent Status</h2>
               <span className="count">{runs.length} agents</span>
             </div>
             {runs.map((run) => (
               <div key={run.agentId} className="data-row">
                 <div>
                   <div className="label">{run.name}</div>
-                  <div className="sublabel">{new Date(run.lastRunAt).toLocaleString("en-US", { timeZone: "UTC", hour: "2-digit", minute: "2-digit" })} UTC</div>
+                  <div className="sublabel">{new Date(run.lastRunAt).toLocaleString("en-US", { timeZone: "UTC", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })} UTC</div>
                 </div>
                 <HealthBadge health={run.health} />
               </div>
@@ -147,7 +151,7 @@ export default async function DashboardPage() {
             {reports.map((report) => (
               <div key={report.id} className="data-row">
                 <span className="label" style={{ flex: 1 }}>{report.summary}</span>
-                <span className="sublabel">{new Date(report.createdAt).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" })}</span>
+                <span className="sublabel">{new Date(report.createdAt).toLocaleString("en-US", { timeZone: "UTC", month: "short", day: "numeric" })}</span>
               </div>
             ))}
           </article>
@@ -166,7 +170,7 @@ export default async function DashboardPage() {
                     <div className="label">{log.slotId}</div>
                     <div className="sublabel">{log.reason}</div>
                   </div>
-                  <span className="sublabel">{new Date(log.killedAt).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" })}</span>
+                  <span className="sublabel">{new Date(log.killedAt).toLocaleString("en-US", { timeZone: "UTC", month: "short", day: "numeric" })}</span>
                 </div>
               ))
             )}
