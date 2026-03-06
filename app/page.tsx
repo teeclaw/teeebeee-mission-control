@@ -1,4 +1,5 @@
 import { useCases } from "@/lib/use-cases";
+import ChairmanActions from "@/app/components/chairman-actions";
 
 function HealthBadge({ health }: { health: string }) {
   const color = health === "healthy" ? "#1f9d55" : health === "stalled" ? "#d97706" : "#b91c1c";
@@ -23,6 +24,8 @@ export default async function DashboardPage() {
       </div>
 
       <section className="grid">
+        <ChairmanActions pipeline={pipeline} portfolio={portfolio} />
+
         <article className="card col-8">
           <h2>Opportunity Pipeline Board</h2>
           <ul>
