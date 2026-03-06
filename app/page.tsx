@@ -1,5 +1,6 @@
 import { useCases } from "@/lib/use-cases";
 import ChairmanActions from "@/app/components/chairman-actions";
+import OpsPanels from "@/app/components/ops-panels";
 
 function HealthBadge({ health }: { health: string }) {
   const color = health === "healthy" ? "#1f9d55" : health === "stalled" ? "#d97706" : "#b91c1c";
@@ -7,13 +8,15 @@ function HealthBadge({ health }: { health: string }) {
 }
 
 export default async function DashboardPage() {
-  const [pipeline, validationQueue, portfolio, runs, reports, killLogs] = await Promise.all([
+  const [pipeline, validationQueue, portfolio, runs, reports, killLogs, cronJobs, todos] = await Promise.all([
     useCases.listPipeline(),
     useCases.listValidationQueue(),
     useCases.listPortfolio(),
     useCases.listAgentRuns(),
     useCases.listReports(),
-    useCases.listKillLogs()
+    useCases.listKillLogs(),
+    useCases.listCronJobs(),
+    useCases.listTodos()
   ]);
 
   return (
@@ -29,6 +32,8 @@ export default async function DashboardPage() {
             <a href="#runs">Agent Runs</a>
             <a href="#reports">Daily Reports</a>
             <a href="#kills">Kill Log</a>
+            <a href="#cron">Cron Calendar</a>
+            <a href="#todos">Pending / Todo</a>
           </nav>
         </aside>
 
@@ -108,6 +113,8 @@ export default async function DashboardPage() {
                 </ul>
               )}
             </article>
+
+            <OpsPanels cronJobs={cronJobs} todos={todos} />
           </section>
         </div>
       </div>

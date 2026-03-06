@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabase";
-import type { AgentRun, DailyReport, KillLog, Opportunity, OpportunityStage, PortfolioSlot, ValidationItem } from "@/lib/types";
+import type { AgentRun, CronJob, DailyReport, KillLog, Opportunity, OpportunityStage, PortfolioSlot, TodoItem, ValidationItem } from "@/lib/types";
 
 export interface MissionControlRepository {
   getOpportunities(): Promise<Opportunity[]>;
@@ -8,6 +8,10 @@ export interface MissionControlRepository {
   getAgentRuns(): Promise<AgentRun[]>;
   getReports(): Promise<DailyReport[]>;
   getKillLogs(): Promise<KillLog[]>;
+  getCronJobs(): Promise<CronJob[]>;
+  getTodos(): Promise<TodoItem[]>;
+  addTodo(title: string, priority: TodoItem["priority"]): Promise<TodoItem>;
+  toggleTodo(id: string): Promise<TodoItem | null>;
   advanceOpportunityStage(opportunityId: string, nextStage: OpportunityStage): Promise<Opportunity | null>;
   killPortfolioSlot(slotId: string, reason: string, killedBy: string): Promise<PortfolioSlot | null>;
   appendReport(summary: string): Promise<DailyReport>;
@@ -38,6 +42,20 @@ const reports: DailyReport[] = [
   { id: "rpt-001", summary: "1 thesis advanced to validation, 0 launches, 1 slot risk flagged.", createdAt: new Date().toISOString() }
 ];
 
+const cronJobs: CronJob[] = [
+  { id: "cron-1", title: "Daily Morning Brief", owner: "Taiga", schedule: "03:00 UTC+7", day: "Mon", status: "healthy" },
+  { id: "cron-2", title: "Daily Improvement Surprise", owner: "Shizuku", schedule: "04:00 UTC+7", day: "Tue", status: "healthy" },
+  { id: "cron-3", title: "Security Audit", owner: "Kurogane", schedule: "09:00 UTC+7", day: "Wed", status: "delayed" },
+  { id: "cron-4", title: "Portfolio Governance", owner: "Mizuho", schedule: "10:00 UTC+7", day: "Thu", status: "healthy" },
+  { id: "cron-5", title: "Weekly GTM Pulse", owner: "Himawari", schedule: "17:00 UTC+7", day: "Fri", status: "healthy" }
+];
+
+const todos: TodoItem[] = [
+  { id: "todo-1", title: "Wire OpenClaw session telemetry", status: "pending", priority: "high", createdAt: new Date().toISOString() },
+  { id: "todo-2", title: "Add RLS policies", status: "pending", priority: "medium", createdAt: new Date().toISOString() },
+  { id: "todo-3", title: "Finalize analytics widgets", status: "done", priority: "low", createdAt: new Date().toISOString() }
+];
+
 const killLogs: KillLog[] = [];
 
 function createInMemoryRepository(): MissionControlRepository {
@@ -48,6 +66,19 @@ function createInMemoryRepository(): MissionControlRepository {
     getAgentRuns: async () => runs,
     getReports: async () => reports,
     getKillLogs: async () => killLogs,
+    getCronJobs: async () => cronJobs,
+    getTodos: async () => todos,
+    addTodo: async (title, priority) => {
+      const item: TodoItem = { id: `todo-${Date.now()}`, title, status: "pending", priority, createdAt: new Date().toISOString() };
+      todos.unshift(item);
+      return item;
+    },
+    toggleTodo: async (id) => {
+      const item = todos.find((t) => t.id === id);
+      if (!item) return null;
+      item.status = item.status === "pending" ? "done" : "pending";
+      return item;
+    },
     advanceOpportunityStage: async (opportunityId, nextStage) => {
       const item = opportunities.find((o) => o.id === opportunityId);
       if (!item) return null;
@@ -58,21 +89,11 @@ function createInMemoryRepository(): MissionControlRepository {
       const slot = slots.find((s) => s.slotId === slotId);
       if (!slot) return null;
       slot.status = "sunset";
-      killLogs.push({
-        id: `kill-${Date.now()}`,
-        slotId,
-        reason,
-        killedBy,
-        killedAt: new Date().toISOString()
-      });
+      killLogs.push({ id: `kill-${Date.now()}`, slotId, reason, killedBy, killedAt: new Date().toISOString() });
       return slot;
     },
     appendReport: async (summary) => {
-      const report: DailyReport = {
-        id: `rpt-${Date.now()}`,
-        summary,
-        createdAt: new Date().toISOString()
-      };
+      const report: DailyReport = { id: `rpt-${Date.now()}`, summary, createdAt: new Date().toISOString() };
       reports.unshift(report);
       return report;
     }
@@ -82,130 +103,79 @@ function createInMemoryRepository(): MissionControlRepository {
 function createSupabaseRepository(): MissionControlRepository {
   const supabase = getSupabaseAdmin();
   if (!supabase) return createInMemoryRepository();
+  const fallback = createInMemoryRepository();
 
   return {
     getOpportunities: async () => {
-      const { data, error } = await supabase
-        .from("opportunities")
-        .select("id,title,stage,confidence,owner")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("opportunities").select("id,title,stage,confidence,owner").order("created_at", { ascending: false });
       if (error || !data) return [];
       return data as Opportunity[];
     },
     getValidations: async () => {
-      const { data, error } = await supabase
-        .from("validations")
-        .select("opportunity_id,decision,rationale,decided_at")
-        .order("decided_at", { ascending: false });
+      const { data, error } = await supabase.from("validations").select("opportunity_id,decision,rationale,decided_at").order("decided_at", { ascending: false });
       if (error || !data) return [];
-      return data.map((v) => ({
-        opportunityId: v.opportunity_id,
-        decision: v.decision,
-        rationale: v.rationale,
-        decidedAt: v.decided_at
-      })) as ValidationItem[];
+      return data.map((v) => ({ opportunityId: v.opportunity_id, decision: v.decision, rationale: v.rationale, decidedAt: v.decided_at })) as ValidationItem[];
     },
     getPortfolioSlots: async () => {
-      const { data, error } = await supabase
-        .from("portfolio_slots")
-        .select("slot_id,project,status,sunset_at")
-        .order("slot_id", { ascending: true });
+      const { data, error } = await supabase.from("portfolio_slots").select("slot_id,project,status,sunset_at").order("slot_id", { ascending: true });
       if (error || !data) return [];
-      return data.map((s) => ({
-        slotId: s.slot_id,
-        project: s.project,
-        status: s.status,
-        sunsetAt: s.sunset_at
-      })) as PortfolioSlot[];
+      return data.map((s) => ({ slotId: s.slot_id, project: s.project, status: s.status, sunsetAt: s.sunset_at })) as PortfolioSlot[];
     },
     getAgentRuns: async () => {
-      const { data, error } = await supabase
-        .from("agent_runs")
-        .select("agent_id,name,health,last_run_at")
-        .order("last_run_at", { ascending: false });
+      const { data, error } = await supabase.from("agent_runs").select("agent_id,name,health,last_run_at").order("last_run_at", { ascending: false });
       if (error || !data) return [];
-      return data.map((r) => ({
-        agentId: r.agent_id,
-        name: r.name,
-        health: r.health,
-        lastRunAt: r.last_run_at
-      })) as AgentRun[];
+      return data.map((r) => ({ agentId: r.agent_id, name: r.name, health: r.health, lastRunAt: r.last_run_at })) as AgentRun[];
     },
     getReports: async () => {
-      const { data, error } = await supabase
-        .from("reports")
-        .select("id,summary,created_at")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("reports").select("id,summary,created_at").order("created_at", { ascending: false });
       if (error || !data) return [];
-      return data.map((r) => ({
-        id: r.id,
-        summary: r.summary,
-        createdAt: r.created_at
-      })) as DailyReport[];
+      return data.map((r) => ({ id: r.id, summary: r.summary, createdAt: r.created_at })) as DailyReport[];
     },
     getKillLogs: async () => {
-      const { data, error } = await supabase
-        .from("kill_logs")
-        .select("id,slot_id,reason,killed_at,killed_by")
-        .order("killed_at", { ascending: false });
+      const { data, error } = await supabase.from("kill_logs").select("id,slot_id,reason,killed_at,killed_by").order("killed_at", { ascending: false });
       if (error || !data) return [];
-      return data.map((k) => ({
-        id: k.id,
-        slotId: k.slot_id,
-        reason: k.reason,
-        killedAt: k.killed_at,
-        killedBy: k.killed_by
-      })) as KillLog[];
+      return data.map((k) => ({ id: k.id, slotId: k.slot_id, reason: k.reason, killedAt: k.killed_at, killedBy: k.killed_by })) as KillLog[];
+    },
+    getCronJobs: async () => {
+      const { data, error } = await supabase.from("cron_jobs").select("id,title,owner,schedule,day,status").order("day", { ascending: true });
+      if (error || !data) return fallback.getCronJobs();
+      return data as CronJob[];
+    },
+    getTodos: async () => {
+      const { data, error } = await supabase.from("todos").select("id,title,status,priority,created_at").order("created_at", { ascending: false });
+      if (error || !data) return fallback.getTodos();
+      return data.map((t) => ({ id: t.id, title: t.title, status: t.status, priority: t.priority, createdAt: t.created_at })) as TodoItem[];
+    },
+    addTodo: async (title, priority) => {
+      const payload = { id: `todo-${Date.now()}`, title, status: "pending", priority, created_at: new Date().toISOString() };
+      const { data, error } = await supabase.from("todos").insert(payload).select("id,title,status,priority,created_at").single();
+      if (error || !data) return fallback.addTodo(title, priority);
+      return { id: data.id, title: data.title, status: data.status, priority: data.priority, createdAt: data.created_at };
+    },
+    toggleTodo: async (id) => {
+      const { data: current } = await supabase.from("todos").select("status").eq("id", id).single();
+      if (!current) return fallback.toggleTodo(id);
+      const next = current.status === "pending" ? "done" : "pending";
+      const { data, error } = await supabase.from("todos").update({ status: next }).eq("id", id).select("id,title,status,priority,created_at").single();
+      if (error || !data) return fallback.toggleTodo(id);
+      return { id: data.id, title: data.title, status: data.status, priority: data.priority, createdAt: data.created_at };
     },
     advanceOpportunityStage: async (opportunityId, nextStage) => {
-      const { data, error } = await supabase
-        .from("opportunities")
-        .update({ stage: nextStage })
-        .eq("id", opportunityId)
-        .select("id,title,stage,confidence,owner")
-        .single();
+      const { data, error } = await supabase.from("opportunities").update({ stage: nextStage }).eq("id", opportunityId).select("id,title,stage,confidence,owner").single();
       if (error || !data) return null;
       return data as Opportunity;
     },
     killPortfolioSlot: async (slotId, reason, killedBy) => {
-      const { data, error } = await supabase
-        .from("portfolio_slots")
-        .update({ status: "sunset" })
-        .eq("slot_id", slotId)
-        .select("slot_id,project,status,sunset_at")
-        .single();
+      const { data, error } = await supabase.from("portfolio_slots").update({ status: "sunset" }).eq("slot_id", slotId).select("slot_id,project,status,sunset_at").single();
       if (error || !data) return null;
-
-      await supabase.from("kill_logs").insert({
-        id: `kill-${Date.now()}`,
-        slot_id: slotId,
-        reason,
-        killed_by: killedBy,
-        killed_at: new Date().toISOString()
-      });
-
-      return {
-        slotId: data.slot_id,
-        project: data.project,
-        status: data.status,
-        sunsetAt: data.sunset_at
-      } as PortfolioSlot;
+      await supabase.from("kill_logs").insert({ id: `kill-${Date.now()}`, slot_id: slotId, reason, killed_by: killedBy, killed_at: new Date().toISOString() });
+      return { slotId: data.slot_id, project: data.project, status: data.status, sunsetAt: data.sunset_at } as PortfolioSlot;
     },
     appendReport: async (summary) => {
-      const payload = {
-        id: `rpt-${Date.now()}`,
-        summary,
-        created_at: new Date().toISOString()
-      };
+      const payload = { id: `rpt-${Date.now()}`, summary, created_at: new Date().toISOString() };
       const { data, error } = await supabase.from("reports").insert(payload).select("id,summary,created_at").single();
-      if (error || !data) {
-        return { id: payload.id, summary, createdAt: payload.created_at };
-      }
-      return {
-        id: data.id,
-        summary: data.summary,
-        createdAt: data.created_at
-      };
+      if (error || !data) return { id: payload.id, summary, createdAt: payload.created_at };
+      return { id: data.id, summary: data.summary, createdAt: data.created_at };
     }
   };
 }

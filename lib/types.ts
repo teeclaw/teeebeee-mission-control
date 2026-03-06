@@ -43,3 +43,20 @@ export interface DailyReport {
   summary: string;
   createdAt: string;
 }
+
+export interface CronJob {
+  id: string;
+  title: string;
+  owner: string;
+  schedule: string;
+  day: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
+  status: "healthy" | "delayed" | "failed";
+}
+
+export interface TodoItem {
+  id: string;
+  title: string;
+  status: "pending" | "done";
+  priority: "low" | "medium" | "high";
+  createdAt: string;
+}

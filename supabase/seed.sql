@@ -39,3 +39,28 @@ values
 on conflict (id) do update set
   summary = excluded.summary,
   created_at = excluded.created_at;
+
+insert into cron_jobs (id, title, owner, schedule, day, status)
+values
+  ('cron-1', 'Daily Morning Brief', 'Taiga', '03:00 UTC+7', 'Mon', 'healthy'),
+  ('cron-2', 'Daily Improvement Surprise', 'Shizuku', '04:00 UTC+7', 'Tue', 'healthy'),
+  ('cron-3', 'Security Audit', 'Kurogane', '09:00 UTC+7', 'Wed', 'delayed'),
+  ('cron-4', 'Portfolio Governance', 'Mizuho', '10:00 UTC+7', 'Thu', 'healthy'),
+  ('cron-5', 'Weekly GTM Pulse', 'Himawari', '17:00 UTC+7', 'Fri', 'healthy')
+on conflict (id) do update set
+  title = excluded.title,
+  owner = excluded.owner,
+  schedule = excluded.schedule,
+  day = excluded.day,
+  status = excluded.status;
+
+insert into todos (id, title, status, priority, created_at)
+values
+  ('todo-1', 'Wire OpenClaw session telemetry', 'pending', 'high', now()),
+  ('todo-2', 'Add RLS policies', 'pending', 'medium', now()),
+  ('todo-3', 'Finalize analytics widgets', 'done', 'low', now())
+on conflict (id) do update set
+  title = excluded.title,
+  status = excluded.status,
+  priority = excluded.priority,
+  created_at = excluded.created_at;

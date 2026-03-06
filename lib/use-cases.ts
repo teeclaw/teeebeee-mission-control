@@ -1,5 +1,5 @@
 import { repo } from "@/lib/repository";
-import type { OpportunityStage } from "@/lib/types";
+import type { OpportunityStage, TodoItem } from "@/lib/types";
 
 const stageOrder: OpportunityStage[] = ["signal", "thesis", "validation", "build", "launch"];
 
@@ -21,6 +21,8 @@ export const useCases = {
   listAgentRuns: async () => repo.getAgentRuns(),
   listReports: async () => repo.getReports(),
   listKillLogs: async () => repo.getKillLogs(),
+  listCronJobs: async () => repo.getCronJobs(),
+  listTodos: async () => repo.getTodos(),
   chairmanGate: (wallet: string | null) => {
     const allowed = parseAllowedWallets();
     if (!allowed.length) return { allowed: true, reason: "CHAIRMAN_WALLETS not set (dev mode)" };
@@ -44,5 +46,15 @@ export const useCases = {
     if (!summary.trim()) return { ok: false, error: "Summary is required" };
     const report = await repo.appendReport(summary);
     return { ok: true, data: report };
+  },
+  addTodo: async (title: string, priority: TodoItem["priority"]) => {
+    if (!title.trim()) return { ok: false, error: "Title is required" };
+    const item = await repo.addTodo(title.trim(), priority);
+    return { ok: true, data: item };
+  },
+  toggleTodo: async (id: string) => {
+    const item = await repo.toggleTodo(id);
+    if (!item) return { ok: false, error: "Todo not found" };
+    return { ok: true, data: item };
   }
 };

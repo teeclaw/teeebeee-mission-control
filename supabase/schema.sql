@@ -41,3 +41,20 @@ create table if not exists kill_logs (
   killed_by text not null,
   killed_at timestamptz not null default now()
 );
+
+create table if not exists cron_jobs (
+  id text primary key,
+  title text not null,
+  owner text not null,
+  schedule text not null,
+  day text not null check (day in ('Mon','Tue','Wed','Thu','Fri','Sat','Sun')),
+  status text not null check (status in ('healthy','delayed','failed'))
+);
+
+create table if not exists todos (
+  id text primary key,
+  title text not null,
+  status text not null check (status in ('pending','done')),
+  priority text not null check (priority in ('low','medium','high')),
+  created_at timestamptz not null default now()
+);
