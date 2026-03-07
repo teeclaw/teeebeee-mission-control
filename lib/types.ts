@@ -36,6 +36,7 @@ export interface AgentRun {
   name: string;
   health: "healthy" | "stalled" | "offline";
   lastRunAt: string;
+  model: string;
 }
 
 export interface DailyReport {

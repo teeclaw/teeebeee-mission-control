@@ -46,6 +46,7 @@ export default async function AgentsPage() {
                     <div>
                       <div className="agent-name">{agent.name}</div>
                       <div className="agent-id">{agent.agentId}</div>
+                      <div className="agent-model">{agent.model}</div>
                     </div>
                   </div>
                   <span className={`tag tag-${agent.health}`}>{agent.health}</span>

@@ -33,7 +33,7 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sb-brand">
         <h3>Mission Control</h3>
-        <p>Teeebeee · v1.0</p>
+        <p>Teeebeee · v1.1.1</p>
       </div>
       {sections.map((s) => (
         <div key={s.label} className="sb-section">

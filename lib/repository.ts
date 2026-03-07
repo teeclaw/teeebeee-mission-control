@@ -37,17 +37,17 @@ const slots: PortfolioSlot[] = [
 ];
 
 const runs: AgentRun[] = [
-  { agentId: "main", name: "Mizutama", health: "healthy", lastRunAt: new Date().toISOString() },
-  { agentId: "pipeline-controller", name: "Taiga", health: "healthy", lastRunAt: new Date().toISOString() },
-  { agentId: "market-researcher", name: "Sora", health: "stalled", lastRunAt: new Date(Date.now() - 1000 * 60 * 190).toISOString() },
-  { agentId: "opportunity-validator", name: "Miyabi", health: "healthy", lastRunAt: new Date(Date.now() - 1000 * 60 * 45).toISOString() },
-  { agentId: "portfolio-manager", name: "Mizuho", health: "healthy", lastRunAt: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
-  { agentId: "product-architect", name: "Kagayaki", health: "offline", lastRunAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString() },
-  { agentId: "lead-developer", name: "Nagare", health: "healthy", lastRunAt: new Date().toISOString() },
-  { agentId: "head-of-growth", name: "Himawari", health: "healthy", lastRunAt: new Date(Date.now() - 1000 * 60 * 60).toISOString() },
-  { agentId: "data-analyst", name: "Shizuku", health: "healthy", lastRunAt: new Date(Date.now() - 1000 * 60 * 120).toISOString() },
-  { agentId: "security-engineer", name: "Kurogane", health: "healthy", lastRunAt: new Date(Date.now() - 1000 * 60 * 90).toISOString() },
-  { agentId: "qa-auditor", name: "Komari", health: "offline", lastRunAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString() }
+  { agentId: "main", name: "Mizutama", health: "healthy", lastRunAt: new Date().toISOString(), model: getAgentModel("main") },
+  { agentId: "pipeline-controller", name: "Taiga", health: "healthy", lastRunAt: new Date().toISOString(), model: getAgentModel("pipeline-controller") },
+  { agentId: "market-researcher", name: "Sora", health: "stalled", lastRunAt: new Date(Date.now() - 1000 * 60 * 190).toISOString(), model: getAgentModel("market-researcher") },
+  { agentId: "opportunity-validator", name: "Miyabi", health: "healthy", lastRunAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(), model: getAgentModel("opportunity-validator") },
+  { agentId: "portfolio-manager", name: "Mizuho", health: "healthy", lastRunAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), model: getAgentModel("portfolio-manager") },
+  { agentId: "product-architect", name: "Kagayaki", health: "offline", lastRunAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), model: getAgentModel("product-architect") },
+  { agentId: "lead-developer", name: "Nagare", health: "healthy", lastRunAt: new Date().toISOString(), model: getAgentModel("lead-developer") },
+  { agentId: "head-of-growth", name: "Himawari", health: "healthy", lastRunAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), model: getAgentModel("head-of-growth") },
+  { agentId: "data-analyst", name: "Shizuku", health: "healthy", lastRunAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(), model: getAgentModel("data-analyst") },
+  { agentId: "security-engineer", name: "Kurogane", health: "healthy", lastRunAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(), model: getAgentModel("security-engineer") },
+  { agentId: "qa-auditor", name: "Komari", health: "offline", lastRunAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(), model: getAgentModel("qa-auditor") }
 ];
 
 const reports: DailyReport[] = [
@@ -123,6 +123,35 @@ function parseCronExpression(expr: string): { schedule: string; day: CronJob["da
     day: "All", 
     frequency: "daily"
   };
+}
+
+function readOpenClawConfig() {
+  try {
+    const configPath = path.join(process.env.HOME || "/home/phan_harry", ".openclaw/openclaw.json");
+    if (!fs.existsSync(configPath)) return null;
+    
+    const content = fs.readFileSync(configPath, "utf-8");
+    return JSON.parse(content);
+  } catch (error) {
+    console.warn("Failed to read OpenClaw config:", error);
+    return null;
+  }
+}
+
+function getAgentModel(agentId: string): string {
+  const config = readOpenClawConfig();
+  if (!config) return "Unknown";
+  
+  const agents = config.agents?.list || [];
+  const agent = agents.find((a: any) => a.id === agentId);
+  
+  if (agent?.model?.primary) {
+    return agent.model.primary.replace("anthropic/", "");
+  }
+  
+  // Fallback to default model
+  const defaultModel = config.agents?.defaults?.model?.primary || "Unknown";
+  return defaultModel.replace("anthropic/", "");
 }
 
 function readOpenClawCronJobs(): CronJob[] {
@@ -251,8 +280,14 @@ function createSupabaseRepository(): MissionControlRepository {
     },
     getAgentRuns: async () => {
       const { data, error } = await supabase.from("agent_runs").select("agent_id,name,health,last_run_at").order("last_run_at", { ascending: false });
-      if (error || !data) return [];
-      return data.map((r) => ({ agentId: r.agent_id, name: r.name, health: r.health, lastRunAt: r.last_run_at })) as AgentRun[];
+      if (error || !data) return fallback.getAgentRuns();
+      return data.map((r) => ({ 
+        agentId: r.agent_id, 
+        name: r.name, 
+        health: r.health, 
+        lastRunAt: r.last_run_at,
+        model: getAgentModel(r.agent_id)
+      })) as AgentRun[];
     },
     getReports: async () => {
       const { data, error } = await supabase.from("reports").select("id,summary,created_at").order("created_at", { ascending: false });
