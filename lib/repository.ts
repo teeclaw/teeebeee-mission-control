@@ -156,10 +156,18 @@ function getAgentModel(agentId: string): string {
 
 function readOpenClawCronJobs(): CronJob[] {
   try {
-    const cronPath = path.join(process.env.HOME || "/home/phan_harry", ".openclaw/cron/jobs.json");
+    const home = process.env.HOME || "/home/phan_harry";
+    const cronPath = path.join(home, ".openclaw/cron/jobs.json");
+    
+    console.log(`[CRON] Environment: NODE_ENV=${process.env.NODE_ENV}, VERCEL=${process.env.VERCEL}`);
+    console.log(`[CRON] HOME directory: ${home}`);
     console.log(`[CRON] Reading from: ${cronPath}`);
+    console.log(`[CRON] File exists: ${fs.existsSync(cronPath)}`);
+    
     if (!fs.existsSync(cronPath)) {
-      console.log(`[CRON] File doesn't exist`);
+      console.log(`[CRON] File doesn't exist - likely in Vercel production environment`);
+      console.log(`[CRON] Current working directory: ${process.cwd()}`);
+      console.log(`[CRON] Files in project root:`, fs.readdirSync(process.cwd()).slice(0, 10));
       return [];
     }
     
@@ -315,6 +323,33 @@ function createSupabaseRepository(): MissionControlRepository {
       // Always read from OpenClaw live data - no fallbacks to avoid showing stale mock data
       const liveJobs = readOpenClawCronJobs();
       console.log("[SUPABASE-REPO] getCronJobs returning", liveJobs.length, "live jobs");
+      
+      if (liveJobs.length === 0) {
+        console.log("[SUPABASE-REPO] No live jobs found - returning mock data with clear indicators");
+        return [
+          {
+            id: "mock-1",
+            title: "⚠️ MOCK: Daily Morning Brief", 
+            owner: "main",
+            schedule: "1:00",
+            day: "All",
+            frequency: "daily" as const,
+            status: "healthy" as const,
+            color: "#6366f1"
+          },
+          {
+            id: "mock-2", 
+            title: "⚠️ MOCK: Market Signal Scan",
+            owner: "main", 
+            schedule: "23:00",
+            day: "All", 
+            frequency: "daily" as const,
+            status: "healthy" as const,
+            color: "#eab308"
+          }
+        ];
+      }
+      
       return liveJobs;
     },
     getTodos: async () => {
