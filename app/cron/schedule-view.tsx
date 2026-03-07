@@ -72,7 +72,8 @@ export default function ScheduleView() {
   useEffect(() => {
     async function fetchJobs() {
       try {
-        const response = await fetch('/api/cron-jobs');
+        // Add timestamp to prevent caching issues
+        const response = await fetch(`/api/cron-jobs?t=${Date.now()}`);
         const result = await response.json();
         setJobs(result.data || []);
       } catch (error) {
