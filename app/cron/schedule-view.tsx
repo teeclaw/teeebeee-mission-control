@@ -61,7 +61,9 @@ function getNextUpJobs(jobs: CronJob[]): Array<CronJob & { eta: string }> {
 }
 
 function getJobsForDay(jobs: CronJob[], day: CronDay): CronJob[] {
-  return jobs.filter((j) => j.frequency === "always" ? false : j.frequency === "daily" || j.day === day);
+  const dayJobs = jobs.filter((j) => j.frequency === "always" ? false : j.frequency === "daily" || j.day === day);
+  console.log(`🔍 [DEBUG] Jobs for ${day}:`, dayJobs.length, dayJobs);
+  return dayJobs;
 }
 
 export default function ScheduleView() {
@@ -75,6 +77,9 @@ export default function ScheduleView() {
         // Add timestamp to prevent caching issues
         const response = await fetch(`/api/cron-jobs?t=${Date.now()}`);
         const result = await response.json();
+        console.log('🔍 [DEBUG] API Response:', result);
+        console.log('🔍 [DEBUG] Jobs data:', result.data);
+        console.log('🔍 [DEBUG] Jobs length:', result.data?.length);
         setJobs(result.data || []);
       } catch (error) {
         console.error('Failed to fetch cron jobs:', error);
@@ -96,6 +101,13 @@ export default function ScheduleView() {
   }
 
   const today = getTodayName();
+  
+  // Debug logging for job structure
+  if (jobs.length > 0) {
+    console.log('🔍 [DEBUG] First job structure:', jobs[0]);
+    jobs.forEach(j => console.log(`🔍 [DEBUG] Job: ${j.title} | freq: ${j.frequency} | day: ${j.day} | schedule: ${j.schedule}`));
+  }
+  
   const alwaysRunning = jobs.filter((j) => j.frequency === "always");
   const failed = jobs.filter((j) => j.status === "failed");
   const nextUp = getNextUpJobs(jobs);
