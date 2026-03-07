@@ -312,14 +312,10 @@ function createSupabaseRepository(): MissionControlRepository {
       return data.map((k) => ({ id: k.id, slotId: k.slot_id, reason: k.reason, killedAt: k.killed_at, killedBy: k.killed_by })) as KillLog[];
     },
     getCronJobs: async () => {
-      // Always read from OpenClaw live data - Supabase cron table is optional
+      // Always read from OpenClaw live data - no fallbacks to avoid showing stale mock data
       const liveJobs = readOpenClawCronJobs();
-      if (liveJobs.length > 0) return liveJobs;
-      
-      // Fallback to Supabase if OpenClaw data unavailable
-      const { data, error } = await supabase.from("cron_jobs").select("id,title,owner,schedule,day,frequency,status,color").order("day", { ascending: true });
-      if (error || !data) return fallback.getCronJobs();
-      return data as CronJob[];
+      console.log("[SUPABASE-REPO] getCronJobs returning", liveJobs.length, "live jobs");
+      return liveJobs;
     },
     getTodos: async () => {
       const { data, error } = await supabase.from("todos").select("id,title,status,priority,created_at").order("created_at", { ascending: false });
