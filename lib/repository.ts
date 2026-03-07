@@ -320,37 +320,40 @@ function createSupabaseRepository(): MissionControlRepository {
       return data.map((k) => ({ id: k.id, slotId: k.slot_id, reason: k.reason, killedAt: k.killed_at, killedBy: k.killed_by })) as KillLog[];
     },
     getCronJobs: async () => {
-      // Always read from OpenClaw live data - no fallbacks to avoid showing stale mock data
-      const liveJobs = readOpenClawCronJobs();
-      console.log("[SUPABASE-REPO] getCronJobs returning", liveJobs.length, "live jobs");
+      // Try Supabase first (synced data)
+      const { data, error } = await supabase
+        .from("cron_jobs")
+        .select("id,title,owner,schedule,day,frequency,status,color")
+        .order("title", { ascending: true });
       
-      if (liveJobs.length === 0) {
-        console.log("[SUPABASE-REPO] No live jobs found - returning mock data with clear indicators");
-        return [
-          {
-            id: "mock-1",
-            title: "⚠️ MOCK: Daily Morning Brief", 
-            owner: "main",
-            schedule: "1:00",
-            day: "All",
-            frequency: "daily" as const,
-            status: "healthy" as const,
-            color: "#6366f1"
-          },
-          {
-            id: "mock-2", 
-            title: "⚠️ MOCK: Market Signal Scan",
-            owner: "main", 
-            schedule: "23:00",
-            day: "All", 
-            frequency: "daily" as const,
-            status: "healthy" as const,
-            color: "#eab308"
-          }
-        ];
+      if (!error && data && data.length > 0) {
+        console.log("[SUPABASE-REPO] Found", data.length, "synced cron jobs from Supabase");
+        return data as CronJob[];
       }
       
-      return liveJobs;
+      // Fallback to direct file read (development mode)
+      console.log("[SUPABASE-REPO] No Supabase data, trying direct OpenClaw read");
+      const liveJobs = readOpenClawCronJobs();
+      
+      if (liveJobs.length > 0) {
+        console.log("[SUPABASE-REPO] Found", liveJobs.length, "jobs from direct OpenClaw read");
+        return liveJobs;
+      }
+      
+      // Final fallback - empty state with sync instructions
+      console.log("[SUPABASE-REPO] No data found - returning sync instruction");
+      return [
+        {
+          id: "sync-instruction",
+          title: "🔄 Run sync to populate data", 
+          owner: "System",
+          schedule: "Manual",
+          day: "All" as const,
+          frequency: "always" as const,
+          status: "delayed" as const,
+          color: "#f97316"
+        }
+      ];
     },
     getTodos: async () => {
       const { data, error } = await supabase.from("todos").select("id,title,status,priority,created_at").order("created_at", { ascending: false });
