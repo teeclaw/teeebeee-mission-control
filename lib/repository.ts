@@ -1,5 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabase";
-import type { AgentRun, CronJob, DailyReport, KillLog, Opportunity, OpportunityStage, PortfolioSlot, RevenueReadyEvent, TodoItem, ValidationItem } from "@/lib/types";
+import type { AgentRun, CronJob, DailyReport, KillLog, Opportunity, OpportunityStage, PortfolioSlot, RevenueReadyEvent, TodoItem, ValidationItem, CronDay } from "@/lib/types";
+import fs from "fs";
+import path from "path";
 
 export interface MissionControlRepository {
   getOpportunities(): Promise<Opportunity[]>;
@@ -52,17 +54,7 @@ const reports: DailyReport[] = [
   { id: "rpt-001", summary: "1 thesis advanced to validation, 0 launches, 1 slot risk flagged.", createdAt: new Date().toISOString() }
 ];
 
-const cronJobs: CronJob[] = [
-  { id: "cron-0", title: "Mission Control Check", owner: "Taiga", schedule: "Every 30 min", day: "All", frequency: "always", status: "healthy", color: "#6366f1" },
-  { id: "cron-1", title: "Market Signal Scan", owner: "Sora", schedule: "5:00 AM", day: "All", frequency: "daily", status: "healthy", color: "#eab308" },
-  { id: "cron-2", title: "Morning Brief", owner: "Taiga", schedule: "8:00 AM", day: "All", frequency: "daily", status: "healthy", color: "#22c55e" },
-  { id: "cron-3", title: "Competitor YouTube Scan", owner: "Sora", schedule: "10:00 AM", day: "All", frequency: "daily", status: "healthy", color: "#ef4444" },
-  { id: "cron-4", title: "Newsletter Reminder", owner: "Himawari", schedule: "9:00 AM", day: "Tue", frequency: "weekly", status: "healthy", color: "#a855f7" },
-  { id: "cron-5", title: "Security Audit", owner: "Kurogane", schedule: "9:00 AM", day: "Wed", frequency: "weekly", status: "delayed", color: "#f97316" },
-  { id: "cron-6", title: "Portfolio Governance", owner: "Mizuho", schedule: "10:00 AM", day: "Thu", frequency: "weekly", status: "healthy", color: "#06b6d4" },
-  { id: "cron-7", title: "Weekly GTM Pulse", owner: "Himawari", schedule: "5:00 PM", day: "Fri", frequency: "weekly", status: "healthy", color: "#ec4899" },
-  { id: "cron-8", title: "Data Cleanup", owner: "Shizuku", schedule: "2:00 AM", day: "Sat", frequency: "weekly", status: "healthy", color: "#14b8a6" }
-];
+
 
 const todos: TodoItem[] = [
   { id: "todo-1", title: "Wire OpenClaw session telemetry", status: "pending", priority: "high", createdAt: new Date().toISOString() },
@@ -77,6 +69,112 @@ const revenueReadyEvents: RevenueReadyEvent[] = [
 
 const killLogs: KillLog[] = [];
 
+// Agent name mapping
+const agentNames: Record<string, string> = {
+  "main": "Mizutama",
+  "pipeline-controller": "Taiga", 
+  "market-researcher": "Sora",
+  "opportunity-validator": "Miyabi",
+  "portfolio-manager": "Mizuho",
+  "product-architect": "Kagayaki",
+  "lead-developer": "Nagare", 
+  "head-of-growth": "Himawari",
+  "data-analyst": "Shizuku",
+  "security-engineer": "Kurogane",
+  "qa-auditor": "Komari"
+};
+
+// Status colors for different job types
+const jobColors = [
+  "#6366f1", "#eab308", "#22c55e", "#ef4444", "#a855f7", 
+  "#f97316", "#06b6d4", "#ec4899", "#14b8a6", "#8b5cf6"
+];
+
+function parseCronExpression(expr: string): { schedule: string; day: CronJob["day"]; frequency: CronJob["frequency"] } {
+  const parts = expr.split(" ");
+  if (parts.length !== 5) return { schedule: expr, day: "All", frequency: "daily" };
+  
+  const [min, hour, dayOfMonth, month, dayOfWeek] = parts;
+  
+  // Handle frequency patterns
+  if (dayOfMonth.includes("*/")) {
+    const interval = parseInt(dayOfMonth.substring(2));
+    return {
+      schedule: `${hour}:${min.padStart(2, '0')}`,
+      day: "All",
+      frequency: interval === 1 ? "daily" : "weekly" // Simplify complex intervals to weekly
+    };
+  }
+  
+  // Handle weekly patterns  
+  if (dayOfWeek !== "*") {
+    const dayMap: CronDay[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const dayIndex = parseInt(dayOfWeek);
+    return {
+      schedule: `${hour}:${min.padStart(2, '0')}`,
+      day: dayMap[dayIndex] || "All",
+      frequency: "weekly"
+    };
+  }
+  
+  // Daily pattern
+  return {
+    schedule: `${hour}:${min.padStart(2, '0')}`,
+    day: "All", 
+    frequency: "daily"
+  };
+}
+
+function readOpenClawCronJobs(): CronJob[] {
+  try {
+    const cronPath = path.join(process.env.HOME || "/home/phan_harry", ".openclaw/cron/jobs.json");
+    if (!fs.existsSync(cronPath)) return [];
+    
+    const content = fs.readFileSync(cronPath, "utf-8");
+    const data = JSON.parse(content);
+    
+    return data.jobs
+      .filter((job: any) => job.enabled)
+      .map((job: any, index: number) => {
+        let scheduleStr: string, day: CronJob["day"], frequency: CronJob["frequency"];
+        
+        if (job.schedule.kind === "cron") {
+          const parsed = parseCronExpression(job.schedule.expr || "");
+          scheduleStr = parsed.schedule;
+          day = parsed.day;
+          frequency = parsed.frequency;
+        } else if (job.schedule.kind === "every") {
+          const hours = Math.round(job.schedule.everyMs / 1000 / 3600);
+          scheduleStr = `Every ${hours}h`;
+          day = "All";
+          frequency = hours === 24 ? "daily" : "always";
+        } else {
+          scheduleStr = "Unknown";
+          day = "All";
+          frequency = "daily";
+        }
+        
+        const owner = agentNames[job.agentId] || job.agentId;
+        const status = job.state?.lastRunStatus === "error" ? "failed" : 
+                     job.state?.consecutiveErrors > 0 ? "delayed" : "healthy";
+        
+        return {
+          id: job.id,
+          title: job.name,
+          owner,
+          schedule: scheduleStr,
+          day,
+          frequency,
+          status: status as CronJob["status"],
+          color: jobColors[index % jobColors.length]
+        };
+      });
+  } catch (error) {
+    console.warn("Failed to read OpenClaw cron jobs:", error);
+    return [];
+  }
+}
+
 function createInMemoryRepository(): MissionControlRepository {
   return {
     getOpportunities: async () => opportunities,
@@ -85,7 +183,7 @@ function createInMemoryRepository(): MissionControlRepository {
     getAgentRuns: async () => runs,
     getReports: async () => reports,
     getKillLogs: async () => killLogs,
-    getCronJobs: async () => cronJobs,
+    getCronJobs: async () => readOpenClawCronJobs(),
     getTodos: async () => todos,
     getRevenueReadyEvents: async () => revenueReadyEvents,
     addTodo: async (title, priority) => {
@@ -167,6 +265,11 @@ function createSupabaseRepository(): MissionControlRepository {
       return data.map((k) => ({ id: k.id, slotId: k.slot_id, reason: k.reason, killedAt: k.killed_at, killedBy: k.killed_by })) as KillLog[];
     },
     getCronJobs: async () => {
+      // Always read from OpenClaw live data - Supabase cron table is optional
+      const liveJobs = readOpenClawCronJobs();
+      if (liveJobs.length > 0) return liveJobs;
+      
+      // Fallback to Supabase if OpenClaw data unavailable
       const { data, error } = await supabase.from("cron_jobs").select("id,title,owner,schedule,day,frequency,status,color").order("day", { ascending: true });
       if (error || !data) return fallback.getCronJobs();
       return data as CronJob[];
