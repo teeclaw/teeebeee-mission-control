@@ -26,14 +26,12 @@ function getNextUpJobs(jobs: CronJob[]): Array<CronJob & { eta: string }> {
       let daysAhead = dayIdx - todayIdx;
       if (daysAhead < 0) daysAhead += 7;
 
-      const timeParts = job.schedule.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      // OpenClaw uses 24-hour format (e.g., "20:00")
+      const timeParts = job.schedule.match(/(\d+):(\d+)/);
       if (!timeParts) continue;
 
-      let hours = parseInt(timeParts[1]);
+      const hours = parseInt(timeParts[1]);
       const mins = parseInt(timeParts[2]);
-      const ampm = timeParts[3].toUpperCase();
-      if (ampm === "PM" && hours !== 12) hours += 12;
-      if (ampm === "AM" && hours === 12) hours = 0;
 
       const target = new Date(now);
       target.setDate(target.getDate() + daysAhead);

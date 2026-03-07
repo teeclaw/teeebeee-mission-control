@@ -157,12 +157,17 @@ function getAgentModel(agentId: string): string {
 function readOpenClawCronJobs(): CronJob[] {
   try {
     const cronPath = path.join(process.env.HOME || "/home/phan_harry", ".openclaw/cron/jobs.json");
-    if (!fs.existsSync(cronPath)) return [];
+    console.log(`[CRON] Reading from: ${cronPath}`);
+    if (!fs.existsSync(cronPath)) {
+      console.log(`[CRON] File doesn't exist`);
+      return [];
+    }
     
     const content = fs.readFileSync(cronPath, "utf-8");
     const data = JSON.parse(content);
+    console.log(`[CRON] Found ${data.jobs?.length || 0} total jobs, ${data.jobs?.filter((j: any) => j.enabled).length || 0} enabled`);
     
-    return data.jobs
+    const result = data.jobs
       .filter((job: any) => job.enabled)
       .map((job: any, index: number) => {
         let scheduleStr: string, day: CronJob["day"], frequency: CronJob["frequency"];
@@ -198,8 +203,11 @@ function readOpenClawCronJobs(): CronJob[] {
           color: jobColors[index % jobColors.length]
         };
       });
+    
+    console.log(`[CRON] Returning ${result.length} parsed jobs:`, result.map((j: CronJob) => `${j.title} @ ${j.schedule}`));
+    return result;
   } catch (error) {
-    console.warn("Failed to read OpenClaw cron jobs:", error);
+    console.warn("[CRON] Failed to read OpenClaw cron jobs:", error);
     return [];
   }
 }
@@ -212,7 +220,11 @@ function createInMemoryRepository(): MissionControlRepository {
     getAgentRuns: async () => runs,
     getReports: async () => reports,
     getKillLogs: async () => killLogs,
-    getCronJobs: async () => readOpenClawCronJobs(),
+    getCronJobs: async () => {
+      const liveJobs = readOpenClawCronJobs();
+      console.log("In-memory getCronJobs: returning", liveJobs.length, "live jobs");
+      return liveJobs;
+    },
     getTodos: async () => todos,
     getRevenueReadyEvents: async () => revenueReadyEvents,
     addTodo: async (title, priority) => {
