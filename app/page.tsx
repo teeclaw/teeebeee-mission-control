@@ -4,7 +4,7 @@ import KPINorthStar from "@/app/components/kpi-northstar";
 import OpsPanels from "@/app/components/ops-panels";
 
 export default async function DashboardPage() {
-  const [pipeline, portfolio, runs, reports, killLogs, todos, revEvents] = await Promise.all([
+  const [pipeline, portfolio, runs, reports, killLogs, todos, revEvents, cronJobs] = await Promise.all([
     useCases.listPipeline(),
     useCases.listPortfolio(),
     useCases.listAgentRuns(),
@@ -12,6 +12,7 @@ export default async function DashboardPage() {
     useCases.listKillLogs(),
     useCases.listTodos(),
     useCases.listRevenueReadyEvents(),
+    useCases.listCronJobs(),
   ]);
 
   return (
@@ -80,7 +81,7 @@ export default async function DashboardPage() {
           {killLogs.length === 0 && <div className="empty">No kills recorded</div>}
         </article>
 
-        <OpsPanels cronJobs={[]} todos={todos} />
+        <OpsPanels cronJobs={cronJobs} todos={todos} />
       </section>
     </>
   );

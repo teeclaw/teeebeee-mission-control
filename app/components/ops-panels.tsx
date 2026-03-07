@@ -10,6 +10,8 @@ export default function OpsPanels({ cronJobs, todos }: { cronJobs: CronJob[]; to
   const [priority, setPriority] = useState<TodoItem["priority"]>("medium");
   const [status, setStatus] = useState("IDLE");
   const days: Array<CronJob["day"]> = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const dailyJobs = cronJobs.filter((j) => j.day === "All");
+  const weeklyJobs = cronJobs.filter((j) => j.day !== "All");
 
   async function addTodo() {
     if (!title.trim()) return;
@@ -31,20 +33,44 @@ export default function OpsPanels({ cronJobs, todos }: { cronJobs: CronJob[]; to
           <span className="panel-title">Cron Schedule</span>
           <span className="panel-count">{cronJobs.length} jobs</span>
         </div>
-        <div className="cal-grid">
-          {days.map((day) => (
-            <div key={day}>
-              <div className="cal-day-head">{day}</div>
-              {cronJobs.filter((j) => j.day === day).map((job) => (
-                <div key={job.id} className="cal-card">
+        {dailyJobs.length > 0 && (
+          <div className="mb-3">
+            <div className="cal-day-head" style={{ marginBottom: 8, textAlign: "left" }}>Daily</div>
+            <div className="daily-jobs-grid">
+              {dailyJobs.map((job) => (
+                <div key={job.id} className="cal-card" style={job.color ? { borderLeft: `3px solid ${job.color}` } : undefined}>
                   <div className="cal-card-title">{job.title}</div>
                   <div className="cal-card-meta">{job.schedule} · {job.owner}</div>
                   <div className="mt-1"><span className={`tag tag-${job.status}`}>{job.status}</span></div>
                 </div>
               ))}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
+        {weeklyJobs.length > 0 && (
+          <div>
+            <div className="cal-day-head" style={{ marginBottom: 8, textAlign: "left" }}>Weekly</div>
+            <div className="cal-grid">
+              {days.map((day) => {
+                const dayJobs = weeklyJobs.filter((j) => j.day === day);
+                if (dayJobs.length === 0) return null;
+                return (
+                  <div key={day}>
+                    <div className="cal-day-head">{day}</div>
+                    {dayJobs.map((job) => (
+                      <div key={job.id} className="cal-card" style={job.color ? { borderLeft: `3px solid ${job.color}` } : undefined}>
+                        <div className="cal-card-title">{job.title}</div>
+                        <div className="cal-card-meta">{job.schedule} · {job.owner}</div>
+                        <div className="mt-1"><span className={`tag tag-${job.status}`}>{job.status}</span></div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        {cronJobs.length === 0 && <div className="empty">No cron jobs configured</div>}
       </article>
 
       <article id="todos" className="panel g12">

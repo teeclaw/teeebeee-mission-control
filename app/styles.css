@@ -373,6 +373,17 @@ body {
 .cal-card-title { font-size: 12px; font-weight: 600; color: var(--text-1); margin-bottom: 4px; }
 .cal-card-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-4); }
 
+/* ─── Daily jobs grid ─── */
+.daily-jobs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .daily-jobs-grid { grid-template-columns: 1fr; }
+}
+
 /* ─── Buttons ─── */
 .btn {
   display: inline-flex;
@@ -916,25 +927,119 @@ body {
   .kanban { grid-template-columns: 1fr; }
 }
 
-/* ─── Responsive ─── */
+/* ─── Responsive: Tablet (≤1100px) ─── */
 @media (max-width: 1100px) {
   .shell { flex-direction: column; }
   .sidebar {
-    position: static;
+    position: sticky;
+    top: 0;
     width: 100%;
     flex-direction: row;
     border-right: none;
     border-bottom: 1px solid var(--border-1);
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    z-index: 100;
   }
+  .sidebar::-webkit-scrollbar { display: none; }
   .sb-brand { display: none; }
-  .sb-section { display: flex; gap: 4px; padding: 8px; margin: 0; }
+  .sb-section { display: flex; gap: 4px; padding: 8px; margin: 0; flex-shrink: 0; }
   .sb-section-label { display: none; }
   .sb-link { white-space: nowrap; padding: 6px 10px; font-size: 12px; }
   .main { margin-left: 0; padding: 20px 16px; }
+  .kanban { grid-template-columns: 1fr 1fr; }
 }
 
+/* ─── Responsive: Small tablet / Large phone (≤900px) ─── */
 @media (max-width: 900px) {
   .g8, .g7, .g6, .g5, .g4, .g3 { grid-column: span 12; }
-  .cal-grid { grid-template-columns: repeat(3, 1fr); }
+  .g { gap: 12px; }
+  .cal-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .kanban { grid-template-columns: 1fr; }
+  .stage-grid { grid-template-columns: repeat(3, 1fr); }
+  .sched-grid { grid-template-columns: repeat(3, 1fr); }
+  .sched-col { border-bottom: 1px solid var(--border-1); }
+  .agent-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .project-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+}
+
+/* ─── Responsive: Phone (≤640px) ─── */
+@media (max-width: 640px) {
+  .main { padding: 16px 12px 40px; }
+  .g { gap: 10px; }
+  .g12, .g11, .g10, .g9, .g8, .g7, .g6, .g5, .g4, .g3, .g2, .g1 { grid-column: span 12; }
+
+  /* Page header */
+  .page-head { flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 20px; }
+  .page-head h1 { font-size: 20px; }
+
+  /* KPI */
+  .kpi-num { font-size: 40px; }
+  .kpi-card { padding: 20px; }
+  .kpi-sub { font-size: 12px; }
+
+  /* Stat cards */
+  .stat-num { font-size: 28px; }
+  .panel { padding: 16px; }
+
+  /* Rows */
+  .row { gap: 8px; }
+  .row-name { font-size: 13px; white-space: normal; }
+
+  /* Schedule grid - single column on phone */
+  .sched-grid { grid-template-columns: 1fr; }
+  .sched-col { border-right: none; border-bottom: 1px solid var(--border-1); min-height: auto; }
+  .sched-col:last-child { border-bottom: none; }
+  .cal-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+
+  /* Stage grid */
+  .stage-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+  /* Agent & project grids - full width cards */
+  .agent-grid { grid-template-columns: 1fr; }
+  .project-grid { grid-template-columns: 1fr; }
+
+  /* Table - make scrollable */
+  .table-head, .table-row { min-width: 500px; }
+  .panel:has(.table-head) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Kanban */
+  .kanban { gap: 12px; }
+  .kanban-col { min-height: auto; padding: 14px; }
+
+  /* Buttons & inputs */
+  .btn { padding: 8px 12px; font-size: 12px; }
+  .input { padding: 8px 12px; font-size: 12px; }
+
+  /* Todo */
+  .todo-label { font-size: 12px; }
+
+  /* View toggle */
+  .vt-btn { padding: 6px 12px; font-size: 12px; }
+
+  /* Live pill */
+  .live-pill { font-size: 10px; padding: 4px 10px; }
+
+  /* KPI card flex layout */
+  .kpi-card .f.fi.fj { flex-direction: column; align-items: flex-start; gap: 16px; }
+
+  /* Chairman wallet input */
+  .input[style*="minWidth"] { min-width: 0 !important; }
+
+  /* Chairman button row */
+  #overrides .f.fg.fw { gap: 8px; }
+  #overrides .btn { flex: 1; min-width: calc(50% - 8px); }
+
+  /* Cron calendar on phone */
+  .cal-grid { grid-template-columns: 1fr 1fr; }
+  .cal-day-head { font-size: 10px; }
+  .cal-card { padding: 8px 10px; }
+  .cal-card-title { font-size: 11px; }
+  .cal-card-meta { font-size: 9px; }
+
+  /* Todo input row */
+  #todos .f.fg.fw { flex-direction: column; }
+  #todos .input { min-width: 0 !important; }
+  #todos .select { width: 100%; }
 }
