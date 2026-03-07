@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { CronDay, CronJob } from "@/lib/types";
 
 const ALL_DAYS: CronDay[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -64,8 +64,36 @@ function getJobsForDay(jobs: CronJob[], day: CronDay): CronJob[] {
   return jobs.filter((j) => j.frequency === "always" ? false : j.frequency === "daily" || j.day === day);
 }
 
-export default function ScheduleView({ jobs }: { jobs: CronJob[] }) {
+export default function ScheduleView() {
+  const [jobs, setJobs] = useState<CronJob[]>([]);
+  const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"week" | "today">("week");
+
+  useEffect(() => {
+    async function fetchJobs() {
+      try {
+        const response = await fetch('/api/cron-jobs');
+        const result = await response.json();
+        setJobs(result.data || []);
+      } catch (error) {
+        console.error('Failed to fetch cron jobs:', error);
+        setJobs([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchJobs();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="page-head">
+        <h1>Schedule</h1>
+        <p className="t-muted t-sm">Loading automated routines...</p>
+      </div>
+    );
+  }
+
   const today = getTodayName();
   const alwaysRunning = jobs.filter((j) => j.frequency === "always");
   const failed = jobs.filter((j) => j.status === "failed");
