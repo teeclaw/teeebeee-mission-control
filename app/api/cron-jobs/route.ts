@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { useCases } from "@/lib/use-cases";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   try {
     console.log("🔍 [API] /api/cron-jobs called");
