@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { AgentDetail, OrgEdge, OrgNode } from "@/lib/types";
+import { createClient } from "@supabase/supabase-js";
 
 type StatusFilter = "all" | "running" | "idle" | "blocked" | "error" | "offline";
 
@@ -16,6 +17,13 @@ export default function OrgChartClient() {
   const [blockersOnly, setBlockersOnly] = useState(false);
   const [scale, setScale] = useState(1);
   const [collapsedTeams, setCollapsedTeams] = useState<string[]>([]);
+
+  const supabase = useMemo(() => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return null;
+    return createClient(url, key);
+  }, []);
 
   async function fetchGraph() {
     const res = await fetch(`/api/orgchart?t=${Date.now()}`, { cache: "no-store" });
@@ -38,8 +46,27 @@ export default function OrgChartClient() {
       fetchGraph().catch(() => null);
     }, 15000);
 
-    return () => clearInterval(timer);
-  }, []);
+    let channel: any;
+    if (supabase) {
+      channel = supabase
+        .channel("orgchart-live")
+        .on("postgres_changes", { event: "*", schema: "public", table: "org_nodes" }, () => {
+          fetchGraph().catch(() => null);
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "org_edges" }, () => {
+          fetchGraph().catch(() => null);
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "agent_blockers" }, () => {
+          fetchGraph().catch(() => null);
+        })
+        .subscribe();
+    }
+
+    return () => {
+      clearInterval(timer);
+      if (channel && supabase) supabase.removeChannel(channel);
+    };
+  }, [supabase]);
 
   useEffect(() => {
     if (!selected) return;
@@ -75,6 +102,11 @@ export default function OrgChartClient() {
   }, [filtered]);
 
   const severity = (st: string) => (st === "running" ? "tag-healthy" : st === "idle" ? "tag-delayed" : "tag-failed");
+  const freshnessLabel = (n: OrgNode) => {
+    if (n.freshnessSec === null || n.freshnessSec === undefined) return { label: "NO_DATA", cls: "tag-failed" };
+    if (n.freshnessSec > 600) return { label: "STALE", cls: "tag-delayed" };
+    return { label: "LIVE", cls: "tag-healthy" };
+  };
 
   return (
     <>
@@ -129,6 +161,18 @@ export default function OrgChartClient() {
             <span className="row-sub">{edges.length} edges (solid/dotted)</span>
           </div>
 
+          {edges.length > 0 && (
+            <div className="connector-list">
+              {edges.slice(0, 20).map((e) => (
+                <div key={e.id} className="connector-row">
+                  <span className="connector-agent">{e.fromAgentId}</span>
+                  <span className={`connector-line ${e.relationType === "dotted" ? "is-dotted" : "is-solid"}`} />
+                  <span className="connector-agent">{e.toAgentId}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="org-canvas-wrap">
             <div className="org-canvas" style={{ transform: `scale(${scale})` }}>
               {byLevel.map(([level, arr]) => (
@@ -143,7 +187,10 @@ export default function OrgChartClient() {
                             <div className="agent-id">{n.agentId}</div>
                             <div className="agent-model">{n.role} · {n.team}</div>
                           </div>
-                          <span className={`tag ${severity(n.status)}`}>{n.status}</span>
+                          <div className="f" style={{ gap: 6 }}>
+                            <span className={`tag ${freshnessLabel(n).cls}`}>{freshnessLabel(n).label}</span>
+                            <span className={`tag ${severity(n.status)}`}>{n.status}</span>
+                          </div>
                         </div>
                         <div className="agent-meta">Health {n.healthScore}% · Freshness {n.freshnessSec ?? "n/a"}s</div>
                       </button>
