@@ -536,6 +536,28 @@ body {
 .connector-line.is-solid { border-top: 2px solid rgba(99,102,241,0.65); }
 .connector-line.is-dotted { border-top: 2px dashed rgba(245,158,11,0.75); }
 
+/* Opportunity report */
+.report-block {
+  border: 1px solid var(--border-1);
+  background: var(--bg-2);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.report-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.report-text {
+  color: var(--text-1);
+  line-height: 1.65;
+}
+
 .btn-accent { background: var(--green); color: var(--bg-0); }
 .btn-accent:hover:not(:disabled) { opacity: 0.9; }
 

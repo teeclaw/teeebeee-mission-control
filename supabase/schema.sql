@@ -68,6 +68,19 @@ create table if not exists revenue_ready_events (
   recorded_at timestamptz not null default now()
 );
 
+create table if not exists opportunity_reports (
+  opportunity_id text primary key references opportunities(id) on delete cascade,
+  signal_summary text not null,
+  signal_evidence text not null,
+  thesis_summary text not null,
+  thesis_model text not null,
+  validation_decision text check (validation_decision in ('GO','NO_GO','CONDITIONAL_GO')),
+  validation_summary text not null,
+  key_risks text not null,
+  sources text not null,
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists agent_events_raw (
   id uuid primary key,
   event_id text unique not null,

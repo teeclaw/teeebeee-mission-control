@@ -87,3 +87,63 @@ on conflict (id) do update set
   opportunity_id = excluded.opportunity_id,
   project_name = excluded.project_name,
   recorded_at = excluded.recorded_at;
+
+insert into opportunity_reports (
+  opportunity_id,
+  signal_summary,
+  signal_evidence,
+  thesis_summary,
+  thesis_model,
+  validation_decision,
+  validation_summary,
+  key_risks,
+  sources,
+  updated_at
+)
+values
+  (
+    'opp-001',
+    'Rising demand for onchain verifiable agent trust and reputation primitives.',
+    'Repeated mentions across builder communities + increasing protocol requests for trust scoring integrations.',
+    'Ship an SDK that lets apps attach and verify agent reputation attestations with low integration overhead.',
+    'Developer-first B2B SDK with API + dashboard + attestations index.',
+    'CONDITIONAL_GO',
+    'Validation is positive but GTM proof still needed from 2+ production integrations.',
+    'Slow adoption if attestations remain fragmented; platform dependency risk.',
+    'Internal signal board, community scans, project validation notes.',
+    now()
+  ),
+  (
+    'opp-002',
+    'Base creator analytics demand is growing among NFT/agent-native projects.',
+    'Founders request better insight tooling for launch timing, wallet cohorts, and retention funnels.',
+    'Create creator intelligence suite focused on Base-native launches and post-mint analytics.',
+    'Subscription intelligence product with cohort analytics + launch recommendation layer.',
+    null,
+    'Not validated yet; currently in thesis stage.',
+    'Competing analytics tools can compress margins quickly.',
+    'Internal discovery logs and opportunity-thesis artifacts.',
+    now()
+  ),
+  (
+    'opp-003',
+    'Teams need deterministic routing and orchestration for multi-agent workflows.',
+    'Operational pain observed in manual routing across specialized agents and brittle handoffs.',
+    'Build A2A router that standardizes dispatch, retries, and execution accountability.',
+    'Workflow infrastructure product with policy engine + observability layer.',
+    'GO',
+    'Validation supports immediate build execution.',
+    'Requires robust reliability guarantees to avoid churn.',
+    'Pipeline run logs and validation summaries.',
+    now()
+  )
+on conflict (opportunity_id) do update set
+  signal_summary = excluded.signal_summary,
+  signal_evidence = excluded.signal_evidence,
+  thesis_summary = excluded.thesis_summary,
+  thesis_model = excluded.thesis_model,
+  validation_decision = excluded.validation_decision,
+  validation_summary = excluded.validation_summary,
+  key_risks = excluded.key_risks,
+  sources = excluded.sources,
+  updated_at = excluded.updated_at;

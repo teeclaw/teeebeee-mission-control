@@ -75,6 +75,19 @@ CREATE TABLE IF NOT EXISTS revenue_ready_events (
   recorded_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS opportunity_reports (
+  opportunity_id TEXT PRIMARY KEY REFERENCES opportunities(id) ON DELETE CASCADE,
+  signal_summary TEXT NOT NULL,
+  signal_evidence TEXT NOT NULL,
+  thesis_summary TEXT NOT NULL,
+  thesis_model TEXT NOT NULL,
+  validation_decision TEXT CHECK (validation_decision IN ('GO','NO_GO','CONDITIONAL_GO')),
+  validation_summary TEXT NOT NULL,
+  key_risks TEXT NOT NULL,
+  sources TEXT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS agent_events_raw (
   id UUID PRIMARY KEY,
   event_id TEXT UNIQUE NOT NULL,

@@ -68,6 +68,7 @@ export const useCases = {
   },
   listActiveBlockers: async () => repo.getAgentBlockers(),
   getAgentDetail: async (agentId: string) => repo.getAgentDetail(agentId),
+  getOpportunityReport: async (opportunityId: string) => repo.getOpportunityReport(opportunityId),
   chairmanGate: (wallet: string | null) => {
     const allowed = parseAllowedWallets();
     if (!allowed.length) return { allowed: true, reason: "CHAIRMAN_WALLETS not set (dev mode)" };

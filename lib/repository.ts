@@ -7,6 +7,7 @@ import type {
   DailyReport,
   KillLog,
   Opportunity,
+  OpportunityReport,
   OpportunityStage,
   OrgEdge,
   OrgNode,
@@ -30,6 +31,7 @@ export interface MissionControlRepository {
   getOrgEdges(): Promise<OrgEdge[]>;
   getAgentBlockers(): Promise<AgentBlocker[]>;
   getAgentDetail(agentId: string): Promise<AgentDetail | null>;
+  getOpportunityReport(opportunityId: string): Promise<OpportunityReport | null>;
   addTodo(title: string, priority: TodoItem["priority"]): Promise<TodoItem>;
   toggleTodo(id: string): Promise<TodoItem | null>;
   recordRevenueReady(opportunityId: string, projectName: string): Promise<RevenueReadyEvent>;
@@ -290,6 +292,27 @@ function createSupabaseRepository(): MissionControlRepository {
               retries: metrics.retries
             }
           : null
+      };
+    },
+    getOpportunityReport: async (opportunityId) => {
+      const { data, error } = await supabase
+        .from("opportunity_reports")
+        .select("opportunity_id,signal_summary,signal_evidence,thesis_summary,thesis_model,validation_decision,validation_summary,key_risks,sources,updated_at")
+        .eq("opportunity_id", opportunityId)
+        .maybeSingle();
+      if (error) throw new Error(`DATA_SOURCE_UNAVAILABLE:opportunity_reports:${error.message}`);
+      if (!data) return null;
+      return {
+        opportunityId: data.opportunity_id,
+        signalSummary: data.signal_summary,
+        signalEvidence: data.signal_evidence,
+        thesisSummary: data.thesis_summary,
+        thesisModel: data.thesis_model,
+        validationDecision: data.validation_decision,
+        validationSummary: data.validation_summary,
+        keyRisks: data.key_risks,
+        sources: data.sources,
+        updatedAt: data.updated_at
       };
     },
     addTodo: async (title, priority) => {

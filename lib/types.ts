@@ -11,6 +11,19 @@ export interface Opportunity {
   decision?: Decision | null;
 }
 
+export interface OpportunityReport {
+  opportunityId: string;
+  signalSummary: string;
+  signalEvidence: string;
+  thesisSummary: string;
+  thesisModel: string;
+  validationDecision: Decision | null;
+  validationSummary: string;
+  keyRisks: string;
+  sources: string;
+  updatedAt: string;
+}
+
 export interface KillLog {
   id: string;
   slotId: string;

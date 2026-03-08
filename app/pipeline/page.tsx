@@ -1,5 +1,6 @@
 import { useCases } from "@/lib/use-cases";
 import type { OpportunityStage, Decision } from "@/lib/types";
+import Link from "next/link";
 
 const stages: OpportunityStage[] = ["signal", "thesis", "validation", "build", "launch"];
 
@@ -82,7 +83,9 @@ export default async function PipelinePage() {
         {pipeline.map((item) => (
           <div key={item.id} className="table-row">
             <span className="td td-grow">
-              <span className="row-name">{item.title}</span>
+              <Link href={`/opportunities/${item.id}`} className="row-name" style={{ textDecoration: "none", color: "inherit" }}>
+                {item.title}
+              </Link>
             </span>
             <span className="td td-md row-sub">{item.owner}</span>
             <span className="td td-xs role-tag">{item.role || 'AGENT'}</span>
