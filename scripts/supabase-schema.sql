@@ -75,6 +75,67 @@ CREATE TABLE IF NOT EXISTS revenue_ready_events (
   recorded_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS agent_events_raw (
+  id UUID PRIMARY KEY,
+  event_id TEXT UNIQUE NOT NULL,
+  event_type TEXT NOT NULL,
+  agent_id TEXT NOT NULL,
+  payload JSONB NOT NULL,
+  sent_at TIMESTAMPTZ NOT NULL,
+  received_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS webhook_receipts (
+  event_id TEXT PRIMARY KEY,
+  source TEXT NOT NULL,
+  received_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS org_nodes (
+  agent_id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL,
+  team TEXT NOT NULL,
+  manager_id TEXT NULL,
+  level INT NOT NULL DEFAULT 3,
+  status TEXT NOT NULL CHECK (status IN ('idle','running','blocked','error','offline')),
+  health_score INT NOT NULL DEFAULT 50,
+  last_event_at TIMESTAMPTZ,
+  freshness_sec INT,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS org_edges (
+  id TEXT PRIMARY KEY,
+  from_agent_id TEXT NOT NULL REFERENCES org_nodes(agent_id) ON DELETE CASCADE,
+  to_agent_id TEXT NOT NULL REFERENCES org_nodes(agent_id) ON DELETE CASCADE,
+  relation_type TEXT NOT NULL CHECK (relation_type IN ('solid','dotted'))
+);
+
+CREATE TABLE IF NOT EXISTS agent_blockers (
+  id TEXT PRIMARY KEY,
+  agent_id TEXT NOT NULL REFERENCES org_nodes(agent_id) ON DELETE CASCADE,
+  severity TEXT NOT NULL CHECK (severity IN ('low','medium','high','critical')),
+  title TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  resolved_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS agent_task_current (
+  agent_id TEXT PRIMARY KEY REFERENCES org_nodes(agent_id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  project TEXT,
+  pipeline_stage TEXT,
+  started_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS agent_metrics_7d (
+  agent_id TEXT PRIMARY KEY REFERENCES org_nodes(agent_id) ON DELETE CASCADE,
+  throughput INT NOT NULL DEFAULT 0,
+  error_rate NUMERIC(5,2) NOT NULL DEFAULT 0,
+  retries INT NOT NULL DEFAULT 0
+);
+
 -- Enable Row Level Security (RLS) - Optional
 -- ALTER TABLE cron_jobs ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE agent_runs ENABLE ROW LEVEL SECURITY;

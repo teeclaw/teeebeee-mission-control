@@ -334,6 +334,27 @@ body {
 .tag-sunset { background: var(--red-soft); color: var(--red); }
 .tag-sunset::before { display: none; }
 
+/* Decision tags */
+.tag-go { background: var(--green-soft); color: var(--green); }
+.tag-go::before { display: none; }
+.tag-conditional { background: var(--amber-soft); color: var(--amber); }
+.tag-conditional::before { display: none; }
+.tag-no-go { background: var(--red-soft); color: var(--red); }
+.tag-no-go::before { display: none; }
+.tag-pending { background: var(--bg-3); color: var(--text-3); }
+.tag-pending::before { display: none; }
+
+/* Role styling */
+.role-tag { 
+  font-family: var(--font-mono); 
+  font-size: 9px; 
+  color: var(--text-3); 
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+  text-align: center;
+}
+
 /* ─── Confidence ─── */
 .conf-wrap { display: flex; align-items: center; gap: 8px; }
 .conf-bar { width: 56px; height: 4px; background: var(--bg-4); border-radius: 2px; overflow: hidden; }
@@ -411,6 +432,79 @@ body {
 
 .btn-danger { background: var(--red-soft); color: var(--red); border-color: rgba(239,68,68,0.15); }
 .btn-danger:hover:not(:disabled) { background: rgba(239,68,68,0.18); }
+
+/* OrgChart */
+.org-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.zoom-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.zoom-num {
+  min-width: 52px;
+  text-align: center;
+  font-family: var(--font-mono);
+  color: var(--text-2);
+}
+
+.org-canvas-wrap {
+  overflow: auto;
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
+  padding: 12px;
+  background: radial-gradient(circle at 20% 0%, rgba(99,102,241,0.06), transparent 30%), var(--bg-2);
+}
+
+.org-canvas {
+  transform-origin: top left;
+  min-width: 980px;
+}
+
+.org-level { margin-bottom: 14px; }
+
+.org-level-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+
+.org-node-btn {
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  border: 1px solid var(--border-1);
+  background: var(--bg-1);
+}
+
+.org-node-active {
+  border-color: rgba(99,102,241,0.45);
+  box-shadow: 0 0 0 1px rgba(99,102,241,0.28), 0 10px 28px rgba(0,0,0,0.25);
+}
+
+.org-drawer {
+  position: fixed;
+  right: 16px;
+  top: 88px;
+  width: 360px;
+  max-height: calc(100vh - 104px);
+  overflow: auto;
+  background: var(--bg-1);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-lg);
+  padding: 16px;
+  z-index: 60;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
 
 .btn-accent { background: var(--green); color: var(--bg-0); }
 .btn-accent:hover:not(:disabled) { opacity: 0.9; }
@@ -778,8 +872,9 @@ body {
 
 .td { font-size: 13px; }
 .th-grow, .td-grow { flex: 1; min-width: 0; }
-.th-md, .td-md { width: 140px; flex-shrink: 0; }
-.th-sm, .td-sm { width: 120px; flex-shrink: 0; text-align: right; }
+.th-md, .td-md { width: 120px; flex-shrink: 0; }
+.th-sm, .td-sm { width: 100px; flex-shrink: 0; text-align: right; }
+.th-xs, .td-xs { width: 110px; flex-shrink: 0; text-align: center; }
 
 /* ─── Schedule page ─── */
 .sched-section {
@@ -1008,9 +1103,44 @@ body {
   .agent-grid { grid-template-columns: 1fr; }
   .project-grid { grid-template-columns: 1fr; }
 
-  /* Table - make scrollable */
-  .table-head, .table-row { min-width: 500px; }
-  .panel:has(.table-head) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* Table - make scrollable with mobile-optimized width */
+  .table-head, .table-row { min-width: 480px; }
+  .panel:has(.table-head) { 
+    overflow-x: auto; 
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--r-md);
+  }
+  
+  /* Mobile table column optimization */
+  .th-md, .td-md { width: 90px; }
+  .th-xs, .td-xs { width: 80px; }
+  .th-sm, .td-sm { width: 75px; }
+  
+  /* Mobile typography */
+  .role-tag { 
+    font-size: 8px; 
+    letter-spacing: 0.2px;
+    padding: 0 4px;
+  }
+  
+  .row-name { 
+    font-size: 13px; 
+    line-height: 1.3;
+    word-break: break-word;
+  }
+  
+  .table-row { padding: 10px 0; }
+  .th { font-size: 9px; }
+  
+  /* Mobile confidence bar */
+  .conf-bar { width: 40px; }
+  .conf-num { font-size: 10px; }
+  
+  /* Mobile tags */
+  .tag { 
+    padding: 2px 6px; 
+    font-size: 9px;
+  }
 
   /* Kanban */
   .kanban { gap: 12px; }

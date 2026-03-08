@@ -3,6 +3,9 @@ import ChairmanActions from "@/app/components/chairman-actions";
 import KPINorthStar from "@/app/components/kpi-northstar";
 import OpsPanels from "@/app/components/ops-panels";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function DashboardPage() {
   const [pipeline, portfolio, runs, reports, killLogs, todos, revEvents, cronJobs] = await Promise.all([
     useCases.listPipeline(),

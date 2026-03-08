@@ -59,8 +59,8 @@ npm run dev
 4. Restart `npm run dev`.
 
 Repository mode:
-- If Supabase envs exist, Mission Control uses Supabase.
-- If not, it falls back to in-memory mode.
+- Mission Control is real-data only (Supabase required).
+- No in-memory/mock fallback is used.
 
 ## Immediate next step (production)
 1. Wire agent run metrics from OpenClaw session events (or gateway status endpoint).

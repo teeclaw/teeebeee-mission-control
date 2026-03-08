@@ -7,6 +7,8 @@ export interface Opportunity {
   stage: OpportunityStage;
   confidence: number;
   owner: string;
+  role?: string;
+  decision?: Decision | null;
 }
 
 export interface KillLog {
@@ -37,6 +39,53 @@ export interface AgentRun {
   health: "healthy" | "stalled" | "offline";
   lastRunAt: string;
   model: string;
+}
+
+export type AgentLiveStatus = "idle" | "running" | "blocked" | "error" | "offline";
+
+export interface OrgNode {
+  agentId: string;
+  name: string;
+  role: string;
+  team: string;
+  managerId: string | null;
+  level: number;
+  status: AgentLiveStatus;
+  healthScore: number;
+  lastEventAt: string | null;
+  freshnessSec: number | null;
+}
+
+export interface OrgEdge {
+  id: string;
+  fromAgentId: string;
+  toAgentId: string;
+  relationType: "solid" | "dotted";
+}
+
+export interface AgentBlocker {
+  id: string;
+  agentId: string;
+  severity: "low" | "medium" | "high" | "critical";
+  title: string;
+  createdAt: string;
+  resolvedAt: string | null;
+}
+
+export interface AgentDetail {
+  node: OrgNode;
+  blockers: AgentBlocker[];
+  currentTask: {
+    title: string;
+    project: string | null;
+    pipelineStage: string | null;
+    startedAt: string | null;
+  } | null;
+  metrics7d: {
+    throughput: number;
+    errorRate: number;
+    retries: number;
+  } | null;
 }
 
 export interface DailyReport {

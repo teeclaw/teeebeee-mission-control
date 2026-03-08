@@ -184,13 +184,15 @@ async function syncAgentRuns() {
     const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
     const agents = Object.entries(config.agents || {}).map(([agentId, agentConfig]) => {
       if (agentId === 'defaults') return null;
-      
+
+      const status = 'idle';
+      const now = new Date().toISOString();
       return {
         agent_id: agentId,
         name: agentNames[agentId] || agentId,
-        health: 'healthy', // Default - could be enhanced with real health checks
-        last_run_at: new Date().toISOString(),
-        synced_at: new Date().toISOString()
+        health: status === 'running' ? 'healthy' : status === 'idle' ? 'stalled' : 'offline',
+        last_run_at: now,
+        synced_at: now
       };
     }).filter(Boolean);
     
@@ -206,6 +208,31 @@ async function syncAgentRuns() {
       }
       
       console.log(`✅ Synced ${agents.length} agents to Supabase`);
+
+      const orgNodes = agents.map((a) => ({
+        agent_id: a.agent_id,
+        name: a.name,
+        role: 'AGENT',
+        team: 'Unassigned',
+        manager_id: null,
+        level: 3,
+        status: 'idle',
+        health_score: 50,
+        last_event_at: a.last_run_at,
+        freshness_sec: 0,
+        updated_at: new Date().toISOString()
+      }));
+
+      const { error: orgErr } = await supabase
+        .from('org_nodes')
+        .upsert(orgNodes, { onConflict: 'agent_id' });
+
+      if (orgErr) {
+        console.error('❌ Error syncing org nodes:', orgErr.message);
+        return false;
+      }
+
+      console.log(`✅ Synced ${orgNodes.length} org nodes to Supabase`);
     }
     
     return true;

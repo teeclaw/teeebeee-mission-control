@@ -1,5 +1,5 @@
 import { useCases } from "@/lib/use-cases";
-import type { OpportunityStage } from "@/lib/types";
+import type { OpportunityStage, Decision } from "@/lib/types";
 
 const stages: OpportunityStage[] = ["signal", "thesis", "validation", "build", "launch"];
 
@@ -21,9 +21,24 @@ function ConfBar({ v }: { v: number }) {
   );
 }
 
+function DecisionTag({ decision }: { decision: Decision | null | undefined }) {
+  if (!decision) {
+    return <span className="tag tag-pending">Pending</span>;
+  }
+  
+  const styles = {
+    GO: { className: "tag tag-go", text: "GO" },
+    CONDITIONAL_GO: { className: "tag tag-conditional", text: "CONDITIONAL" },
+    NO_GO: { className: "tag tag-no-go", text: "NO-GO" }
+  };
+  
+  const style = styles[decision];
+  return <span className={style.className}>{style.text}</span>;
+}
+
 export default async function PipelinePage() {
   const [pipeline, vq] = await Promise.all([
-    useCases.listPipeline(),
+    useCases.listPipelineWithDecisions(),
     useCases.listValidationQueue(),
   ]);
 
@@ -59,7 +74,9 @@ export default async function PipelinePage() {
         <div className="table-head">
           <span className="th th-grow">Opportunity</span>
           <span className="th th-md">Owner</span>
+          <span className="th th-xs">Role</span>
           <span className="th th-sm">Confidence</span>
+          <span className="th th-sm">Decision</span>
           <span className="th th-sm">Stage</span>
         </div>
         {pipeline.map((item) => (
@@ -68,7 +85,9 @@ export default async function PipelinePage() {
               <span className="row-name">{item.title}</span>
             </span>
             <span className="td td-md row-sub">{item.owner}</span>
+            <span className="td td-xs role-tag">{item.role || 'AGENT'}</span>
             <span className="td td-sm"><ConfBar v={item.confidence} /></span>
+            <span className="td td-sm"><DecisionTag decision={item.decision} /></span>
             <span className="td td-sm"><span className="tag tag-stage">{item.stage}</span></span>
           </div>
         ))}

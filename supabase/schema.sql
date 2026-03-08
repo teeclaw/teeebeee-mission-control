@@ -67,3 +67,64 @@ create table if not exists revenue_ready_events (
   project_name text not null,
   recorded_at timestamptz not null default now()
 );
+
+create table if not exists agent_events_raw (
+  id uuid primary key,
+  event_id text unique not null,
+  event_type text not null,
+  agent_id text not null,
+  payload jsonb not null,
+  sent_at timestamptz not null,
+  received_at timestamptz not null default now()
+);
+
+create table if not exists webhook_receipts (
+  event_id text primary key,
+  source text not null,
+  received_at timestamptz not null default now()
+);
+
+create table if not exists org_nodes (
+  agent_id text primary key,
+  name text not null,
+  role text not null,
+  team text not null,
+  manager_id text null,
+  level int not null default 3,
+  status text not null check (status in ('idle','running','blocked','error','offline')),
+  health_score int not null default 50,
+  last_event_at timestamptz,
+  freshness_sec int,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists org_edges (
+  id text primary key,
+  from_agent_id text not null references org_nodes(agent_id) on delete cascade,
+  to_agent_id text not null references org_nodes(agent_id) on delete cascade,
+  relation_type text not null check (relation_type in ('solid','dotted'))
+);
+
+create table if not exists agent_blockers (
+  id text primary key,
+  agent_id text not null references org_nodes(agent_id) on delete cascade,
+  severity text not null check (severity in ('low','medium','high','critical')),
+  title text not null,
+  created_at timestamptz not null default now(),
+  resolved_at timestamptz
+);
+
+create table if not exists agent_task_current (
+  agent_id text primary key references org_nodes(agent_id) on delete cascade,
+  title text not null,
+  project text,
+  pipeline_stage text,
+  started_at timestamptz
+);
+
+create table if not exists agent_metrics_7d (
+  agent_id text primary key references org_nodes(agent_id) on delete cascade,
+  throughput int not null default 0,
+  error_rate numeric(5,2) not null default 0,
+  retries int not null default 0
+);

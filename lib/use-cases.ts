@@ -3,6 +3,25 @@ import type { OpportunityStage, TodoItem } from "@/lib/types";
 
 const stageOrder: OpportunityStage[] = ["signal", "thesis", "validation", "build", "launch"];
 
+// Map agent names to their roles
+function getAgentRole(agentName: string): string {
+  const roleMap: Record<string, string> = {
+    'Miyabi': 'VALIDATOR',
+    'Sora': 'RESEARCHER', 
+    'Taiga': 'CONTROLLER',
+    'Mizuho': 'MANAGER',
+    'Nagare': 'DEVELOPER',
+    'Himawari': 'GROWTH',
+    'Shizuku': 'ANALYST',
+    'Kurogane': 'SECURITY',
+    'Komari': 'QA',
+    'Kagayaki': 'ARCHITECT',
+    'Teeebeee': 'CEO'
+  };
+  
+  return roleMap[agentName] || 'AGENT';
+}
+
 function parseAllowedWallets() {
   return (process.env.CHAIRMAN_WALLETS || "")
     .split(",")
@@ -12,6 +31,25 @@ function parseAllowedWallets() {
 
 export const useCases = {
   listPipeline: async () => repo.getOpportunities(),
+  listPipelineWithDecisions: async () => {
+    const [opportunities, validations] = await Promise.all([
+      repo.getOpportunities(),
+      repo.getValidations()
+    ]);
+    
+    // Create a map of opportunity ID to validation decision
+    const decisionsMap = new Map();
+    validations.forEach(v => {
+      decisionsMap.set(v.opportunityId, v.decision);
+    });
+    
+    // Add decision and role fields to each opportunity
+    return opportunities.map(opp => ({
+      ...opp,
+      role: getAgentRole(opp.owner),
+      decision: decisionsMap.get(opp.id) || null
+    }));
+  },
   listValidationQueue: async () => {
     const [opps, validations] = await Promise.all([repo.getOpportunities(), repo.getValidations()]);
     const validatedIds = new Set(validations.map((v) => v.opportunityId));
@@ -24,6 +62,12 @@ export const useCases = {
   listCronJobs: async () => repo.getCronJobs(),
   listTodos: async () => repo.getTodos(),
   listRevenueReadyEvents: async () => repo.getRevenueReadyEvents(),
+  getOrgChart: async () => {
+    const [nodes, edges] = await Promise.all([repo.getOrgNodes(), repo.getOrgEdges()]);
+    return { nodes, edges };
+  },
+  listActiveBlockers: async () => repo.getAgentBlockers(),
+  getAgentDetail: async (agentId: string) => repo.getAgentDetail(agentId),
   chairmanGate: (wallet: string | null) => {
     const allowed = parseAllowedWallets();
     if (!allowed.length) return { allowed: true, reason: "CHAIRMAN_WALLETS not set (dev mode)" };
