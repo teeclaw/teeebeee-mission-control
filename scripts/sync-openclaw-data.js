@@ -43,6 +43,44 @@ const agentNames = {
   'business-launch': 'Business Launcher'
 };
 
+function getAgentRuntimeSnapshot(agentId) {
+  try {
+    const sessionsPath = path.join(OPENCLAW_DIR, 'agents', agentId, 'sessions', 'sessions.json');
+    if (!fs.existsSync(sessionsPath)) {
+      return { status: 'offline', lastRunAt: null };
+    }
+
+    const payload = JSON.parse(fs.readFileSync(sessionsPath, 'utf-8'));
+    const rows = Object.values(payload || {});
+    if (!rows.length) {
+      return { status: 'offline', lastRunAt: null };
+    }
+
+    const latest = rows.reduce((acc, cur) => {
+      const a = Number(acc?.updatedAt || 0);
+      const b = Number(cur?.updatedAt || 0);
+      return b > a ? cur : acc;
+    }, rows[0]);
+
+    const updatedAtMs = Number(latest?.updatedAt || 0);
+    const ageSec = updatedAtMs ? Math.floor((Date.now() - updatedAtMs) / 1000) : Infinity;
+    const aborted = Boolean(latest?.abortedLastRun);
+
+    let status = 'offline';
+    if (aborted) status = 'error';
+    else if (ageSec <= 300) status = 'running';
+    else if (ageSec <= 86400) status = 'idle';
+    else status = 'offline';
+
+    return {
+      status,
+      lastRunAt: updatedAtMs ? new Date(updatedAtMs).toISOString() : null
+    };
+  } catch (error) {
+    return { status: 'offline', lastRunAt: null };
+  }
+}
+
 function parseCronExpression(expr) {
   const parts = expr.split(" ");
   if (parts.length !== 5) return { schedule: expr, day: "All", frequency: "daily" };
@@ -190,16 +228,18 @@ async function syncAgentRuns() {
       .map((a) => {
         const agentId = a?.id;
         if (!agentId) return null;
-
-        const status = 'idle';
+        const runtime = getAgentRuntimeSnapshot(agentId);
         const now = new Date().toISOString();
+
         return {
           agent_id: agentId,
           name: a?.name || agentNames[agentId] || agentId,
           model_primary: a?.model?.primary || defaultPrimary,
           model_fallback: a?.model?.fallback || defaultFallback,
-          health: status === 'running' ? 'healthy' : status === 'idle' ? 'stalled' : 'offline',
-          last_run_at: now,
+          runtime_status: runtime.status,
+          health: runtime.status === 'running' ? 'healthy' : runtime.status === 'idle' ? 'stalled' : 'offline',
+          last_run_at: runtime.lastRunAt || now,
+          has_runtime_timestamp: Boolean(runtime.lastRunAt),
           synced_at: now
         };
       })
@@ -250,11 +290,14 @@ async function syncAgentRuns() {
         manager_id: roleMap[a.agent_id]?.manager_id || null,
         level: roleMap[a.agent_id]?.level ?? 3,
         status: 'idle',
-        health_score: 50,
+        health_score: a.runtime_status === 'running' ? 95 : a.runtime_status === 'idle' ? 70 : a.runtime_status === 'error' ? 30 : 20,
         last_event_at: a.last_run_at,
-        freshness_sec: 0,
+        freshness_sec: a.has_runtime_timestamp
+          ? Math.max(0, Math.floor((Date.now() - new Date(a.last_run_at).getTime()) / 1000))
+          : null,
         model_primary: a.model_primary || null,
         model_fallback: a.model_fallback || null,
+        status: a.runtime_status,
         updated_at: new Date().toISOString()
       }));
 
