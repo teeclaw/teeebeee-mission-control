@@ -54,6 +54,8 @@ export interface OrgNode {
   healthScore: number;
   lastEventAt: string | null;
   freshnessSec: number | null;
+  modelPrimary?: string | null;
+  modelFallback?: string | null;
 }
 
 export interface OrgEdge {

@@ -139,10 +139,19 @@ function createSupabaseRepository(): MissionControlRepository {
       return ensure(data, error, "revenue_ready_events").map((r: any) => ({ id: r.id, opportunityId: r.opportunity_id, projectName: r.project_name, recordedAt: r.recorded_at })) as RevenueReadyEvent[];
     },
     getOrgNodes: async () => {
-      const { data, error } = await supabase
+      let { data, error }: any = await supabase
         .from("org_nodes")
-        .select("agent_id,name,role,team,manager_id,level,status,health_score,last_event_at,freshness_sec")
+        .select("agent_id,name,role,team,manager_id,level,status,health_score,last_event_at,freshness_sec,model_primary,model_fallback")
         .order("level", { ascending: true });
+
+      if (error && error.message.includes("column org_nodes.model_primary does not exist")) {
+        const legacy = await supabase
+          .from("org_nodes")
+          .select("agent_id,name,role,team,manager_id,level,status,health_score,last_event_at,freshness_sec")
+          .order("level", { ascending: true });
+        data = legacy.data;
+        error = legacy.error;
+      }
 
       if (error && error.message.includes("Could not find the table 'public.org_nodes'")) {
         const { data: legacy, error: legacyErr } = await supabase
@@ -174,7 +183,9 @@ function createSupabaseRepository(): MissionControlRepository {
         status: n.status,
         healthScore: n.health_score,
         lastEventAt: n.last_event_at,
-        freshnessSec: n.freshness_sec
+        freshnessSec: n.freshness_sec,
+        modelPrimary: n.model_primary || null,
+        modelFallback: n.model_fallback || null
       })) as OrgNode[];
     },
     getOrgEdges: async () => {
@@ -202,11 +213,21 @@ function createSupabaseRepository(): MissionControlRepository {
       })) as AgentBlocker[];
     },
     getAgentDetail: async (agentId) => {
-      const { data: n, error: nErr } = await supabase
+      let { data: n, error: nErr }: any = await supabase
         .from("org_nodes")
-        .select("agent_id,name,role,team,manager_id,level,status,health_score,last_event_at,freshness_sec")
+        .select("agent_id,name,role,team,manager_id,level,status,health_score,last_event_at,freshness_sec,model_primary,model_fallback")
         .eq("agent_id", agentId)
         .single();
+
+      if (nErr && nErr.message.includes("column org_nodes.model_primary does not exist")) {
+        const legacy = await supabase
+          .from("org_nodes")
+          .select("agent_id,name,role,team,manager_id,level,status,health_score,last_event_at,freshness_sec")
+          .eq("agent_id", agentId)
+          .single();
+        n = legacy.data;
+        nErr = legacy.error;
+      }
       if (nErr) throw new Error(`DATA_SOURCE_UNAVAILABLE:org_nodes:${nErr.message}`);
       if (!n) return null;
 
@@ -242,7 +263,9 @@ function createSupabaseRepository(): MissionControlRepository {
           status: n.status,
           healthScore: n.health_score,
           lastEventAt: n.last_event_at,
-          freshnessSec: n.freshness_sec
+          freshnessSec: n.freshness_sec,
+          modelPrimary: n.model_primary || null,
+          modelFallback: n.model_fallback || null
         },
         blockers: (blockers || []).map((b: any) => ({
           id: b.id,

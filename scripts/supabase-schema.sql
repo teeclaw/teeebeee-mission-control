@@ -102,6 +102,8 @@ CREATE TABLE IF NOT EXISTS org_nodes (
   health_score INT NOT NULL DEFAULT 50,
   last_event_at TIMESTAMPTZ,
   freshness_sec INT,
+  model_primary TEXT,
+  model_fallback TEXT,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 

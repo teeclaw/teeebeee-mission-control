@@ -182,25 +182,44 @@ async function syncAgentRuns() {
     }
     
     const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-    const agents = Object.entries(config.agents || {}).map(([agentId, agentConfig]) => {
-      if (agentId === 'defaults') return null;
+    const list = Array.isArray(config?.agents?.list) ? config.agents.list : [];
+    const defaultPrimary = config?.agents?.defaults?.model?.primary || null;
+    const defaultFallback = config?.agents?.defaults?.model?.fallback || null;
 
-      const status = 'idle';
-      const now = new Date().toISOString();
-      return {
-        agent_id: agentId,
-        name: agentNames[agentId] || agentId,
-        health: status === 'running' ? 'healthy' : status === 'idle' ? 'stalled' : 'offline',
-        last_run_at: now,
-        synced_at: now
-      };
-    }).filter(Boolean);
+    const agents = list
+      .map((a) => {
+        const agentId = a?.id;
+        if (!agentId) return null;
+
+        const status = 'idle';
+        const now = new Date().toISOString();
+        return {
+          agent_id: agentId,
+          name: a?.name || agentNames[agentId] || agentId,
+          model_primary: a?.model?.primary || defaultPrimary,
+          model_fallback: a?.model?.fallback || defaultFallback,
+          health: status === 'running' ? 'healthy' : status === 'idle' ? 'stalled' : 'offline',
+          last_run_at: now,
+          synced_at: now
+        };
+      })
+      .filter(Boolean);
     
     if (agents.length > 0) {
+      // Cleanup wrong legacy row caused by previous parser bug
+      await supabase.from('agent_runs').delete().eq('agent_id', 'list');
+      await supabase.from('org_nodes').delete().eq('agent_id', 'list');
+
       // Upsert agents
       const { error } = await supabase
         .from('agent_runs')
-        .upsert(agents, { onConflict: 'agent_id' });
+        .upsert(agents.map(a => ({
+          agent_id: a.agent_id,
+          name: a.name,
+          health: a.health,
+          last_run_at: a.last_run_at,
+          synced_at: a.synced_at
+        })), { onConflict: 'agent_id' });
       
       if (error) {
         console.error('❌ Error syncing agents:', error.message);
@@ -209,17 +228,33 @@ async function syncAgentRuns() {
       
       console.log(`✅ Synced ${agents.length} agents to Supabase`);
 
+      const roleMap = {
+        'main': { role: 'CEO', team: 'Leadership', level: 0, manager_id: null },
+        'pipeline-controller': { role: 'COO', team: 'Leadership', level: 1, manager_id: 'main' },
+        'portfolio-manager': { role: 'Portfolio', team: 'Operations', level: 2, manager_id: 'pipeline-controller' },
+        'market-researcher': { role: 'Research', team: 'Discovery', level: 2, manager_id: 'pipeline-controller' },
+        'opportunity-validator': { role: 'Validator', team: 'Discovery', level: 2, manager_id: 'pipeline-controller' },
+        'product-architect': { role: 'Architect', team: 'Build', level: 2, manager_id: 'pipeline-controller' },
+        'lead-developer': { role: 'Developer', team: 'Build', level: 3, manager_id: 'product-architect' },
+        'security-engineer': { role: 'Security', team: 'Build', level: 3, manager_id: 'product-architect' },
+        'qa-auditor': { role: 'QA', team: 'Build', level: 3, manager_id: 'product-architect' },
+        'head-of-growth': { role: 'Growth', team: 'Launch', level: 2, manager_id: 'pipeline-controller' },
+        'data-analyst': { role: 'Data', team: 'Launch', level: 3, manager_id: 'head-of-growth' }
+      };
+
       const orgNodes = agents.map((a) => ({
         agent_id: a.agent_id,
         name: a.name,
-        role: 'AGENT',
-        team: 'Unassigned',
-        manager_id: null,
-        level: 3,
+        role: roleMap[a.agent_id]?.role || 'AGENT',
+        team: roleMap[a.agent_id]?.team || 'Unassigned',
+        manager_id: roleMap[a.agent_id]?.manager_id || null,
+        level: roleMap[a.agent_id]?.level ?? 3,
         status: 'idle',
         health_score: 50,
         last_event_at: a.last_run_at,
         freshness_sec: 0,
+        model_primary: a.model_primary || null,
+        model_fallback: a.model_fallback || null,
         updated_at: new Date().toISOString()
       }));
 
@@ -232,7 +267,28 @@ async function syncAgentRuns() {
         return false;
       }
 
+      const edges = orgNodes
+        .filter((n) => n.manager_id)
+        .map((n) => ({
+          id: `${n.manager_id}->${n.agent_id}`,
+          from_agent_id: n.manager_id,
+          to_agent_id: n.agent_id,
+          relation_type: 'solid'
+        }));
+
+      await supabase.from('org_edges').delete().neq('id', '__never__');
+      if (edges.length > 0) {
+        const { error: edgeErr } = await supabase
+          .from('org_edges')
+          .upsert(edges, { onConflict: 'id' });
+        if (edgeErr) {
+          console.error('❌ Error syncing org edges:', edgeErr.message);
+          return false;
+        }
+      }
+
       console.log(`✅ Synced ${orgNodes.length} org nodes to Supabase`);
+      console.log(`✅ Synced ${edges.length} org edges to Supabase`);
     }
     
     return true;

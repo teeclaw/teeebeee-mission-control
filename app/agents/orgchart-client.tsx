@@ -102,11 +102,6 @@ export default function OrgChartClient() {
   }, [filtered]);
 
   const severity = (st: string) => (st === "running" ? "tag-healthy" : st === "idle" ? "tag-delayed" : "tag-failed");
-  const freshnessLabel = (n: OrgNode) => {
-    if (n.freshnessSec === null || n.freshnessSec === undefined) return { label: "NO_DATA", cls: "tag-failed" };
-    if (n.freshnessSec > 600) return { label: "STALE", cls: "tag-delayed" };
-    return { label: "LIVE", cls: "tag-healthy" };
-  };
 
   return (
     <>
@@ -187,12 +182,10 @@ export default function OrgChartClient() {
                             <div className="agent-id">{n.agentId}</div>
                             <div className="agent-model">{n.role} · {n.team}</div>
                           </div>
-                          <div className="f" style={{ gap: 6 }}>
-                            <span className={`tag ${freshnessLabel(n).cls}`}>{freshnessLabel(n).label}</span>
-                            <span className={`tag ${severity(n.status)}`}>{n.status}</span>
-                          </div>
+                          <span className={`tag ${severity(n.status)}`}>{n.status}</span>
                         </div>
-                        <div className="agent-meta">Health {n.healthScore}% · Freshness {n.freshnessSec ?? "n/a"}s</div>
+                        <div className="agent-meta">Primary: {n.modelPrimary || "unknown"}</div>
+                        <div className="agent-meta">Fallback: {n.modelFallback || "none"}</div>
                       </button>
                     ))}
                   </div>
@@ -215,7 +208,8 @@ export default function OrgChartClient() {
               <div className="agent-name" style={{ marginBottom: 8 }}>{detail.node.name}</div>
               <div className="agent-id">{detail.node.agentId}</div>
               <div className="agent-meta">{detail.node.role} · {detail.node.team}</div>
-              <div className="agent-meta">Last Event: {detail.node.lastEventAt || "n/a"}</div>
+              <div className="agent-meta">Primary: {detail.node.modelPrimary || "unknown"}</div>
+              <div className="agent-meta">Fallback: {detail.node.modelFallback || "none"}</div>
 
               <div className="panel-head" style={{ marginTop: 16, marginBottom: 8 }}>
                 <span className="panel-title">Current Task</span>
