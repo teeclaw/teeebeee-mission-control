@@ -115,16 +115,14 @@ export default function ScheduleView() {
 
   return (
     <>
-      <div className="page-head">
-        <div>
-          <h1>Schedule</h1>
-          <p className="t-muted t-sm" style={{ marginTop: 2 }}>Automated routines</p>
+      <div className="f fi fj" style={{ marginBottom: 16 }}>
+        <div className="live-pill">
+          <span className="live-dot" />
+          {jobs.length} routines
         </div>
-        <div className="f fi" style={{ gap: 8 }}>
-          <div className="view-toggle">
-            <button className={`vt-btn ${view === "week" ? "vt-active" : ""}`} onClick={() => setView("week")}>Week</button>
-            <button className={`vt-btn ${view === "today" ? "vt-active" : ""}`} onClick={() => setView("today")}>Today</button>
-          </div>
+        <div className="view-toggle">
+          <button className={`vt-btn ${view === "week" ? "vt-active" : ""}`} onClick={() => setView("week")}>Week</button>
+          <button className={`vt-btn ${view === "today" ? "vt-active" : ""}`} onClick={() => setView("today")}>Today</button>
         </div>
       </div>
 

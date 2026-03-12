@@ -105,8 +105,7 @@ export default function OrgChartClient() {
 
   return (
     <>
-      <div className="page-head">
-        <h1>Agents OrgChart</h1>
+      <div className="f fi fj" style={{ marginBottom: 16 }}>
         <div className="live-pill"><span className="live-dot" /> LIVE · {nodes.length} nodes · {edges.length} edges</div>
       </div>
 

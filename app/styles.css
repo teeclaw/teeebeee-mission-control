@@ -1070,6 +1070,14 @@ body {
   .sched-col { border-bottom: 1px solid var(--border-1); }
 }
 
+/* ─── 5-col Kanban ─── */
+.kanban-5col {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-top: 4px;
+}
+
 /* ─── Stage grid ─── */
 .stage-grid {
   display: grid;
@@ -1080,6 +1088,7 @@ body {
 @media (max-width: 900px) {
   .stage-grid { grid-template-columns: repeat(3, 1fr); }
   .kanban { grid-template-columns: 1fr; }
+  .kanban-5col { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ─── Responsive: Tablet (≤1100px) ─── */
@@ -1196,6 +1205,7 @@ body {
 
   /* Kanban */
   .kanban { gap: 12px; }
+  .kanban-5col { grid-template-columns: 1fr; gap: 12px; }
   .kanban-col { min-height: auto; padding: 14px; }
 
   /* Buttons & inputs */
