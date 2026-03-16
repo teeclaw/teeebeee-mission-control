@@ -6,11 +6,7 @@ import type { Opportunity, PortfolioSlot } from "@/lib/types";
 
 type Props = { pipeline: Opportunity[]; portfolio: PortfolioSlot[] };
 
-declare global {
-  interface Window {
-    ethereum?: { request: (a: { method: string; params?: unknown[] }) => Promise<unknown> };
-  }
-}
+// window.ethereum type provided by wagmi
 
 export default function ChairmanActions({ pipeline, portfolio }: Props) {
   const router = useRouter();

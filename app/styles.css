@@ -1243,3 +1243,73 @@ body {
   #todos .input { min-width: 0 !important; }
   #todos .select { width: 100%; }
 }
+
+/* Wallet Authentication Styles */
+.wallet-auth {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.auth-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #a0a0a0;
+}
+
+.auth-icon {
+  font-size: 16px;
+}
+
+.auth-text {
+  font-weight: 500;
+}
+
+.auth-btn, .signout-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: 8px;
+}
+
+.auth-btn:hover, .signout-btn:hover {
+  background: #0056CC;
+}
+
+.auth-btn:disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.signout-btn {
+  background: #666;
+  margin-top: 4px;
+}
+
+.signout-btn:hover {
+  background: #555;
+}
+
+.wallet-auth.authenticated .auth-status {
+  color: #4CAF50;
+}
+
+/* RainbowKit customizations */
+div[data-rk] {
+  --rk-colors-accent-color: #007AFF;
+  --rk-colors-accent-color-foreground: white;
+  --rk-border-radius-action-button: 6px;
+  --rk-border-radius-modal: 12px;
+}

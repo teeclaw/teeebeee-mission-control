@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { WalletAuth } from "./wallet-auth";
 
 const sections = [
   {
@@ -36,6 +37,12 @@ export default function Sidebar() {
         <h3>Mission Control</h3>
         <p>Teeebeee · v2.0.0</p>
       </div>
+      
+      <div className="sb-section">
+        <div className="sb-section-label">Authentication</div>
+        <WalletAuth />
+      </div>
+
       {sections.map((s) => (
         <div key={s.label} className="sb-section">
           <div className="sb-section-label">{s.label}</div>
