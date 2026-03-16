@@ -1,8 +1,8 @@
 import "./styles.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import type { ReactNode } from "react";
-import Sidebar from "@/app/components/sidebar";
 import { Providers } from "./providers";
+import { AppShell } from "./components/app-shell";
 
 export const metadata = {
   title: "Mission Control — Teeebeee",
@@ -14,10 +14,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body>
         <Providers>
-          <div className="shell">
-            <Sidebar />
-            <main className="main">{children}</main>
-          </div>
+          <AppShell>{children}</AppShell>
         </Providers>
       </body>
     </html>

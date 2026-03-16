@@ -1313,3 +1313,127 @@ div[data-rk] {
   --rk-border-radius-action-button: 6px;
   --rk-border-radius-modal: 12px;
 }
+
+/* Login Page Styles */
+.login-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-container {
+  max-width: 400px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 40px 32px;
+  text-align: center;
+}
+
+.login-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 8px 0;
+}
+
+.login-header p {
+  font-size: 14px;
+  color: #888;
+  margin: 0 0 24px 0;
+}
+
+.login-subtitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #ccc;
+  margin-bottom: 32px;
+}
+
+.login-icon {
+  font-size: 16px;
+}
+
+.login-auth-section {
+  margin-bottom: 32px;
+}
+
+.login-auth-section .wallet-auth {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.login-help {
+  margin-top: 16px;
+}
+
+.login-help p {
+  font-size: 14px;
+  color: #999;
+  margin: 4px 0;
+}
+
+.login-chains {
+  font-size: 12px !important;
+  color: #666 !important;
+}
+
+.login-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 20px;
+}
+
+.login-footer p {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
+}
+
+.login-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 0;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top: 2px solid #007AFF;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.login-loading p {
+  font-size: 14px;
+  color: #999;
+  margin: 0;
+}
+
+/* Override RainbowKit styles for login page */
+.login-page div[data-rk] {
+  --rk-colors-accent-color: #007AFF;
+  --rk-colors-accent-color-foreground: white;
+  --rk-border-radius-action-button: 8px;
+  --rk-border-radius-modal: 16px;
+}

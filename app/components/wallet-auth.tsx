@@ -3,11 +3,14 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useSignMessage } from 'wagmi';
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { SiweMessage } from 'siwe';
 
 export function WalletAuth() {
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
+  const router = useRouter();
+  const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -56,7 +59,13 @@ export function WalletAuth() {
         body: JSON.stringify({ message: messageText, signature }),
       });
 
-      if (verifyRes.ok) setIsAuthenticated(true);
+      if (verifyRes.ok) {
+        setIsAuthenticated(true);
+        // Redirect to dashboard if on login page
+        if (pathname === '/login') {
+          router.push('/');
+        }
+      }
     } catch (err) {
       console.error('Sign in failed:', err);
     } finally {
